@@ -1,5 +1,9 @@
 package org.mule.kicks.integration;
 
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +36,7 @@ import com.sforce.soap.partner.SaveResult;
  * The objective of this class is to validate the correct behavior of the Mule
  * Kick that make calls to external systems.
  * 
- * The test will invoke the batch process and afterwards check that the contacts
+ * The test will invoke the batch process and afterwards check that the users
  * had been correctly created and that the ones that should be filtered are not
  * in the destination sand box.
  * 
@@ -45,8 +49,8 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 	protected Boolean failed;
 	protected BatchJobInstanceStore jobInstanceStore;
 
-	private static SubflowInterceptingChainLifecycleWrapper checkContactflow;
-	private static List<Map<String, String>> createdContacts = new ArrayList<Map<String, String>>();
+	private static SubflowInterceptingChainLifecycleWrapper checkUserflow;
+	private static List<Map<String, String>> createdUsers = new ArrayList<Map<String, String>>();
 
 	protected class BatchWaitListener implements BatchNotificationListener {
 
@@ -69,8 +73,8 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 		jobInstanceStore = muleContext.getRegistry().lookupObject(BatchJobInstanceStore.class);
 		muleContext.registerListener(new BatchWaitListener());
 
-		checkContactflow = getSubFlow("retrieveContactFlow");
-		checkContactflow.initialise();
+		checkUserflow = getSubFlow("retrieveUserFlow");
+		checkUserflow.initialise();
 
 		createTestDataInSandBox();
 	}
@@ -89,27 +93,25 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 
 		this.awaitJobTermination();
 
-		Assert.assertTrue(this.wasJobSuccessful());
+		assertTrue(this.wasJobSuccessful());
 
 		batchJobInstance = this.getUpdatedInstance(batchJobInstance);
 
-		Assert.assertEquals("The contact should not have been sync", null, invokeRetrieveContactFlow(checkContactflow, createdContacts.get(0)));
+		assertNull("The user should not have been sync", invokeRetrieveUserFlow(checkUserflow, createdUsers.get(0)));
 
-		Assert.assertEquals("The contact should not have been sync", null, invokeRetrieveContactFlow(checkContactflow, createdContacts.get(1)));
-
-		Map<String, String> payload = invokeRetrieveContactFlow(checkContactflow, createdContacts.get(2));
-		Assert.assertEquals("The contact should have been sync", createdContacts.get(2).get("Email"), payload.get("Email"));
+		Map<String, String> payload = invokeRetrieveUserFlow(checkUserflow, createdUsers.get(1));
+		assertEquals("The user should have been sync", createdUsers.get(1).get("Email"), payload.get("Email"));
 	}
 
 	@SuppressWarnings("unchecked")
-	private Map<String, String> invokeRetrieveContactFlow(SubflowInterceptingChainLifecycleWrapper flow, Map<String, String> contact) throws Exception {
-		Map<String, String> contactMap = new HashMap<String, String>();
+	private Map<String, String> invokeRetrieveUserFlow(SubflowInterceptingChainLifecycleWrapper flow, Map<String, String> user) throws Exception {
+		Map<String, String> userMap = new HashMap<String, String>();
 
-		contactMap.put("Email", contact.get("Email"));
-		contactMap.put("FirstName", contact.get("FirstName"));
-		contactMap.put("LastName", contact.get("LastName"));
+		userMap.put("Email", user.get("Email"));
+		userMap.put("FirstName", user.get("FirstName"));
+		userMap.put("LastName", user.get("LastName"));
 
-		MuleEvent event = flow.process(getTestEvent(contactMap, MessageExchangePattern.REQUEST_RESPONSE));
+		MuleEvent event = flow.process(getTestEvent(userMap, MessageExchangePattern.REQUEST_RESPONSE));
 		Object payload = event.getMessage().getPayload();
 		if (payload instanceof NullPayload) {
 			return null;
@@ -148,68 +150,57 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 
 	@SuppressWarnings("unchecked")
 	private void createTestDataInSandBox() throws MuleException, Exception {
-		SubflowInterceptingChainLifecycleWrapper flow = getSubFlow("createContactFlow");
+		SubflowInterceptingChainLifecycleWrapper flow = getSubFlow("createUserFlow");
 		flow.initialise();
 
-		// This contact should not be sync
-		Map<String, String> contact = createContact("A", 0);
-		contact.put("Email", "");
-		createdContacts.add(contact);
+		// This user should not be sync
+		Map<String, String> user = createUser("A", 0);
+		user.put("IsActive", "false");
+		createdUsers.add(user);
 
-		// This contact should not be sync
-		contact = createContact("A", 1);
-		contact.put("MailingCountry", "ARG");
-		createdContacts.add(contact);
+		// This user should BE sync
+		user = createUser("A", 1);
+		createdUsers.add(user);
 
-		// This contact should BE sync
-		contact = createContact("A", 2);
-		createdContacts.add(contact);
-
-		MuleEvent event = flow.process(getTestEvent(createdContacts, MessageExchangePattern.REQUEST_RESPONSE));
+		MuleEvent event = flow.process(getTestEvent(createdUsers, MessageExchangePattern.REQUEST_RESPONSE));
 		List<SaveResult> results = (List<SaveResult>) event.getMessage().getPayload();
 		for (int i = 0; i < results.size(); i++) {
-			createdContacts.get(i).put("Id", results.get(i).getId());
+			createdUsers.get(i).put("Id", results.get(i).getId());
 		}
 	}
 
 	private void deleteTestDataFromSandBox() throws MuleException, Exception {
-		// Delete the created contacts in A
-		SubflowInterceptingChainLifecycleWrapper flow = getSubFlow("deleteContactFromAFlow");
+		// Delete the created users in A
+		SubflowInterceptingChainLifecycleWrapper flow = getSubFlow("deleteUserFromAFlow");
 		flow.initialise();
 
 		List<String> idList = new ArrayList<String>();
-		for (Map<String, String> c : createdContacts) {
+		for (Map<String, String> c : createdUsers) {
 			idList.add(c.get("Id"));
 		}
 		flow.process(getTestEvent(idList, MessageExchangePattern.REQUEST_RESPONSE));
 
-		// Delete the created contacts in B
-		flow = getSubFlow("deleteContactFromBFlow");
+		// Delete the created users in B
+		flow = getSubFlow("deleteUserFromBFlow");
 		flow.initialise();
 		idList.clear();
-		for (Map<String, String> c : createdContacts) {
-			Map<String, String> contact = invokeRetrieveContactFlow(checkContactflow, c);
-			if (contact != null) {
-				idList.add(contact.get("Id"));
+		for (Map<String, String> c : createdUsers) {
+			Map<String, String> user = invokeRetrieveUserFlow(checkUserflow, c);
+			if (user != null) {
+				idList.add(user.get("Id"));
 			}
 		}
 		flow.process(getTestEvent(idList, MessageExchangePattern.REQUEST_RESPONSE));
 	}
 
-	private Map<String, String> createContact(String orgId, int sequence) {
-		Map<String, String> contact = new HashMap<String, String>();
+	private Map<String, String> createUser(String orgId, int sequence) {
+		Map<String, String> user = new HashMap<String, String>();
 
-		contact.put("FirstName", "FirstName_" + sequence);
-		contact.put("LastName", "LastName_" + sequence);
-		contact.put("Email", "some.email." + sequence + "@fakemail.com");
-		contact.put("Description", "Some fake description");
-		contact.put("MailingCity", "Denver");
-		contact.put("MailingCountry", "USA");
-		contact.put("MobilePhone", "123456789");
-		contact.put("Department", "department_" + sequence + "_" + orgId);
-		contact.put("Phone", "123456789");
-		contact.put("Title", "Dr");
+		user.put("FirstName", "FirstName_" + sequence);
+		user.put("LastName", "LastName_" + sequence);
+		user.put("IsActive", "true");
+		user.put("Email", "some.email." + sequence + "@fakemail.com");
 
-		return contact;
+		return user;
 	}
 }

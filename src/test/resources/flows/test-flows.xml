@@ -4,20 +4,20 @@
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
 http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
-    <sub-flow name="createContactFlow" doc:name="createContactFlow">
-        <sfdc:create config-ref="SalesforceA" type="Contact" doc:name="Salesforce">
+    <sub-flow name="createUserFlow" doc:name="createUserFlow">
+        <sfdc:create config-ref="SalesforceA" type="User" doc:name="Salesforce">
             <sfdc:objects ref="#[payload]"/>
         </sfdc:create>
     </sub-flow>
-    <sub-flow name="retrieveContactFlow" doc:name="retrieveContactFlow">
-        <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, Email FROM Contact WHERE (Email = '#[payload['Email']]' AND FirstName= '#[payload['FirstName']]' AND LastName= '#[payload['LastName']]' )" doc:name="Salesforce"/>
+    <sub-flow name="retrieveUserFlow" doc:name="retrieveUserFlow">
+        <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, Email FROM User WHERE Email = '#[payload['Email']]'" doc:name="Salesforce"/>
     </sub-flow>
-    <sub-flow name="deleteContactFromAFlow" doc:name="deleteContactFromAFlow">
+    <sub-flow name="deleteUserFromAFlow" doc:name="deleteUserFromAFlow">
         <sfdc:delete config-ref="SalesforceA" doc:name="Salesforce">
             <sfdc:ids ref="#[payload]"/>
         </sfdc:delete>
     </sub-flow>
-    <sub-flow name="deleteContactFromBFlow" doc:name="deleteContactFromBFlow">
+    <sub-flow name="deleteUserFromBFlow" doc:name="deleteUserFromBFlow">
         <sfdc:delete config-ref="SalesforceB" doc:name="Salesforce">
             <sfdc:ids ref="#[payload]"/>
         </sfdc:delete>

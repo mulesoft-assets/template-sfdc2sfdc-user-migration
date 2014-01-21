@@ -8,43 +8,34 @@ http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/m
 http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
 http://www.mulesoft.org/schema/mule/smtp http://www.mulesoft.org/schema/mule/smtp/current/mule-smtp.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
-    <batch:job name="migrateContactsBatch">
+    <batch:job name="migrateUsersBatch">
         <batch:threading-profile poolExhaustedAction="WAIT"/>
         <batch:input>
-            <sfdc:query config-ref="SalesforceA" query="dsql:SELECT Department,Description,Email,FirstName,LastModifiedDate,LastName,MailingCity,MailingCountry,MobilePhone,Phone,Title FROM Contact WHERE (MailingCountry = 'USA' AND Email &lt;&gt; '') ORDER BY Email ASC" doc:name="query Contacts from Salesforce instance A" fetchSize="${page.size}"/>
+            <sfdc:query config-ref="SalesforceA" query="SELECT Id, Email, FirstName, LastName, Username, LastModifiedDate FROM User WHERE IsActive = true" doc:name="query Users from Salesforce instance A" fetchSize="${page.size}"/>
         </batch:input> 
         <batch:process-records>
-            <batch:step name="getContactInBStep">
-                <enricher source="#[payload]" target="#[recordVars['contactInB']]" doc:name="store result in record var 'contactInB'">
-                    <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, LastModifiedDate FROM Contact WHERE Email = '#[payload['Email']]'" doc:name="query contact in Salesforce instance B"/>
+            <batch:step name="getUserInBStep">
+                <enricher source="#[payload]" target="#[recordVars['userInB']]" doc:name="store result in record var 'userInB'">
+                    <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, LastModifiedDate FROM User WHERE Email = '#[payload['Email']]'" doc:name="query user in Salesforce instance B"/>
                 </enricher>
             </batch:step>
-            <batch:step name="Batch_Step2">
-                <poll doc:name="asdfasdfdf"/>
-            </batch:step>
-            <batch:step name="Batch_Step1">
-                <ee:cache doc:name="sdfg"/>
-            </batch:step>
-            <batch:step name="Batch_Step">
-                <async doc:name="asdf"/>
-            </batch:step>
-            <batch:step name="selectNewerContactStep" filter-expression="#[recordVars['contactInB'] is NullPayload]">
+            <batch:step name="selectNewerUserStep" filter-expression="#[recordVars['userInB'] is NullPayload]">
                 <choice doc:name="Choice">
-                    <when expression="#[org.mule.kicks.util.ContactDateComparator.isAfter(payload, recordVars['contactInB'])]">
-                        <expression-component doc:name="define Id in SalesForce Intance B"><![CDATA[payload['Id'] = recordVars['contactInB']['Id']
+                    <when expression="#[org.mule.kicks.util.UserDateComparator.isAfter(payload, recordVars['userInB'])]">
+                        <expression-component doc:name="define Id in SalesForce Intance B"><![CDATA[payload['Id'] = recordVars['userInB']['Id']
 
 ]]></expression-component>
                     </when>
                     <otherwise>
-                        <set-payload doc:name="set to null to skip this contact" value="#[return null]"/>
+                        <set-payload doc:name="set to null to skip this user" value="#[return null]"/>
                     </otherwise>
                 </choice>
             </batch:step>
-            <batch:step name="createContactsInBStep" filter-expression="#[payload is NullPayload]">
+            <batch:step name="createUsersInBStep" filter-expression="#[payload is NullPayload]">
                 <expression-component doc:name="remove Fields type and LastModifiedDate"><![CDATA[payload.remove('type'); 
 payload.remove('LastModifiedDate');]]></expression-component>
                 <batch:commit size="200" doc:name="Batch Commit">
-					<sfdc:upsert config-ref="SalesforceB"  type="Contact" doc:name="upsert contacts in org B" externalIdFieldName="Id">
+					<sfdc:upsert config-ref="SalesforceB"  type="User" doc:name="upsert users in org B" externalIdFieldName="Id">
                         <sfdc:objects ref="#[payload]"/>
 					</sfdc:upsert>
                     <logger level="INFO" doc:name="Logger"/>
@@ -69,7 +60,7 @@ payload.remove('LastModifiedDate');]]></expression-component>
 This flow should control the direction of the application, and it should be called by the different endpoints that your Kick exposes to trigger it.
 
 ">
-        <batch:execute name="migrateContactsBatch" doc:name="trigger migrateContactsBatch"/>
+        <batch:execute name="migrateUsersBatch" doc:name="trigger migrateUsersBatch"/>
         <exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="catch Exception and call defaultChoiceExceptionStrategy"/>
     </flow>
     
