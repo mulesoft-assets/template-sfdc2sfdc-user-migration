@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:smtp="http://www.mulesoft.org/schema/mule/smtp" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.5.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
+http://www.mulesoft.org/schema/mule/smtp http://www.mulesoft.org/schema/mule/smtp/current/mule-smtp.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+    <batch:job name="migrateContactsBatch">
+        <batch:threading-profile poolExhaustedAction="WAIT"/>
+        <batch:input>
+            <sfdc:query config-ref="SalesforceA" query="dsql:SELECT Department,Description,Email,FirstName,LastModifiedDate,LastName,MailingCity,MailingCountry,MobilePhone,Phone,Title FROM Contact WHERE (MailingCountry = 'USA' AND Email &lt;&gt; '') ORDER BY Email ASC" doc:name="query Contacts from Salesforce instance A" fetchSize="${page.size}"/>
+        </batch:input> 
+        <batch:process-records>
+            <batch:step name="getContactInBStep">
+                <enricher source="#[payload]" target="#[recordVars['contactInB']]" doc:name="store result in record var 'contactInB'">
+                    <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, LastModifiedDate FROM Contact WHERE Email = '#[payload['Email']]'" doc:name="query contact in Salesforce instance B"/>
+                </enricher>
+            </batch:step>
+            <batch:step name="Batch_Step2">
+                <poll doc:name="asdfasdfdf"/>
+            </batch:step>
+            <batch:step name="Batch_Step1">
+                <ee:cache doc:name="sdfg"/>
+            </batch:step>
+            <batch:step name="Batch_Step">
+                <async doc:name="asdf"/>
+            </batch:step>
+            <batch:step name="selectNewerContactStep" filter-expression="#[recordVars['contactInB'] is NullPayload]">
+                <choice doc:name="Choice">
+                    <when expression="#[org.mule.kicks.util.ContactDateComparator.isAfter(payload, recordVars['contactInB'])]">
+                        <expression-component doc:name="define Id in SalesForce Intance B"><![CDATA[payload['Id'] = recordVars['contactInB']['Id']
+
+]]></expression-component>
+                    </when>
+                    <otherwise>
+                        <set-payload doc:name="set to null to skip this contact" value="#[return null]"/>
+                    </otherwise>
+                </choice>
+            </batch:step>
+            <batch:step name="createContactsInBStep" filter-expression="#[payload is NullPayload]">
+                <expression-component doc:name="remove Fields type and LastModifiedDate"><![CDATA[payload.remove('type'); 
+payload.remove('LastModifiedDate');]]></expression-component>
+                <batch:commit size="200" doc:name="Batch Commit">
+					<sfdc:upsert config-ref="SalesforceB"  type="Contact" doc:name="upsert contacts in org B" externalIdFieldName="Id">
+                        <sfdc:objects ref="#[payload]"/>
+					</sfdc:upsert>
+                    <logger level="INFO" doc:name="Logger"/>
+                </batch:commit>
+            </batch:step>
+        </batch:process-records>
+        <batch:on-complete>
+            <all doc:name="All">
+                <processor-chain>
+            		<json:object-to-json-transformer doc:name="transform BatchJobInstance to JSON"/>
+            		<logger message="Migration process has finished: #[payload]" level="INFO" doc:name="log 'Migration process has finished'"/>
+                </processor-chain>
+				<processor-chain>
+                	<json:object-to-json-transformer doc:name="transform BatchJobInstance to JSON"/>
+					<smtp:outbound-endpoint host="${smtp.host}" port="${smtp.port}" user="${smtp.user}" password="${smtp.password}" to="${mail.to}" from="${mail.from}" subject="${mail.subject}" responseTimeout="10000" connector-ref="gmailConnector" doc:name="send mail"/>
+				</processor-chain>
+            </all>
+        </batch:on-complete>
+    </batch:job>
+    <flow name="mainFlow" doc:name="mainFlow" processingStrategy="synchronous" doc:description="This flow is the entry point to the Kick business logic.
+
+This flow should control the direction of the application, and it should be called by the different endpoints that your Kick exposes to trigger it.
+
+">
+        <batch:execute name="migrateContactsBatch" doc:name="trigger migrateContactsBatch"/>
+        <exception-strategy ref="defaultChoiceExceptionStrategy" doc:name="catch Exception and call defaultChoiceExceptionStrategy"/>
+    </flow>
+    
+    
+</mule>
