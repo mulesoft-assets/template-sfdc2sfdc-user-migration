@@ -56,3 +56,8 @@ target/
 # Test credentials to be use locally only #
 # --------------------------------------- #
 src/test/resources/mule.test.properties
+
+# ------------------------------------------------------------------------ #
+# Added ignore because of https://www.mulesoft.org/jira/browse/STUDIO-4317 #
+# ------------------------------------------------------------------------ #
+./src/main/app/test-flows.xml
