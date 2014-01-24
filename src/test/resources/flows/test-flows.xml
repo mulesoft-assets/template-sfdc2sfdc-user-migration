@@ -5,9 +5,21 @@ http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/cor
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
 http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd">
     <sub-flow name="createUserFlow" doc:name="createUserFlow">
-        <sfdc:create config-ref="SalesforceA" type="User" doc:name="Salesforce">
+        <foreach doc:name="for each User to be created/updated">
+        <logger message="Query = SELECT Id FROM User WHERE Email LIKE '#[payload['Email']]'" level="ERROR" doc:name="Logger"/>
+            <enricher target="#[flowVars['userInA']]" doc:name="store result of query in 'userInA'" source="#[payload]">
+                <sfdc:query-single config-ref="SalesforceA" query="SELECT Id FROM User WHERE Email LIKE '#[payload['Email']]'" doc:name="query User in Salesforce Instance A"/>
+            </enricher>
+            <logger message="From Instance A = #[flowVars['userInA']]" level="ERROR" doc:name="Logger"/>
+            <expression-component doc:name="set fields to userInA where needed"><![CDATA[if (flowVars['userInA'] != null) {
+	payload.put('Id', flowVars['userInA']['Id']);
+}	]]></expression-component>
+            <logger message="To be updated/created = #[payload]" level="ERROR" doc:name="Logger"/>
+        </foreach>
+        <sfdc:upsert config-ref="SalesforceA" type="User" externalIdFieldName="Id" doc:name="upsert Users in Salesforce Instance A">
             <sfdc:objects ref="#[payload]"/>
-        </sfdc:create>
+        </sfdc:upsert>
+        <logger level="ERROR" message="Upserting users result: #[payload]" doc:name="log result of upsert"/>
     </sub-flow>
     <sub-flow name="retrieveUserFlow" doc:name="retrieveUserFlow">
         <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, Email FROM User WHERE Email = '#[payload['Email']]'" doc:name="Salesforce"/>
