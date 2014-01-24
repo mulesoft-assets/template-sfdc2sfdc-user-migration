@@ -9,8 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import junit.framework.Assert;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +29,6 @@ import com.mulesoft.module.batch.api.notification.BatchNotification;
 import com.mulesoft.module.batch.api.notification.BatchNotificationListener;
 import com.mulesoft.module.batch.engine.BatchJobInstanceAdapter;
 import com.mulesoft.module.batch.engine.BatchJobInstanceStore;
-import com.sforce.soap.partner.SaveResult;
 
 /**
  * The objective of this class is to validate the correct behavior of the Mule
@@ -41,9 +38,10 @@ import com.sforce.soap.partner.SaveResult;
  * had been correctly created and that the ones that should be filtered are not
  * in the destination sand box.
  * 
- * @author damiansima
  */
 public class BusinessLogicTestIT extends AbstractKickTestCase {
+	private static final String DEFAULT_PROFILE_ID = "00e80000001CDZBAA4";
+
 	protected static final int TIMEOUT = 60;
 
 	private Prober prober;
@@ -197,8 +195,6 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 	private Map<String, Object> createUser(String orgId, int sequence) {
 		Map<String, Object> user = new HashMap<String, Object>();
 
-		
-//		SELECT Id, Email, FirstName, LastName, Username, Alias, TimeZoneSidKey, LocaleSidKey, EmailEncodingKey, ProfileId, LanguageLocaleKey, LastModifiedDate FROM User WHERE IsActive = true
 		user.put("FirstName", "FirstName_" + sequence);
 		user.put("LastName", "LastName_" + sequence);
 		user.put("Alias", "Alias_" + sequence);
@@ -206,8 +202,8 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 		user.put("LocaleSidKey", "en_US");
 		user.put("EmailEncodingKey", "ISO-8859-1");
 		
-		// TODO - Should remove this profile as it's a real one from the sandbox account and generate it
-		user.put("ProfileId", "00e80000001CDZBAA4");
+		// TODO - Replace this ProfileId with one of your own org
+		user.put("ProfileId", DEFAULT_PROFILE_ID);
 		
 		user.put("LanguageLocaleKey", "en_US");
 		user.put("IsActive", true);
