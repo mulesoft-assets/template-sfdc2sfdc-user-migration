@@ -1,4 +1,4 @@
-# Mule Kick: SFDC to SFDC Contacts Sync
+# Mule Kick: SFDC to SFDC User Migration
 
 + [Use Case](#usecase)
 + [Run it!](#runit)
@@ -18,20 +18,20 @@
 
 
 # Use Case <a name="usecase"/>
-As a Salesforce admin I want to syncronize contacts between two Salesfoce orgs.
+As a Salesforce admin I want to migrate users between two Salesfoce orgs.
 
-This Kick (template) should serve as a foundation for the process of migrating contacts from one Salesfoce instance to another, being able to specify filtering criterias and desired behaviour when a contact already exists in the destination org. 
+This Kick (template) should serve as a foundation for the process of migrating users from one Salesfoce instance to another, being able to specify filtering criterias and desired behaviour when a contact already exists in the destination org. 
 
 As implemented, this Kick leverage the [Batch Module](http://www.mulesoft.org/documentation/display/current/Batch+Processing).
-The batch job is divided in  Input, Process and On Complete stages.
-During the Input stage the Kick will go to the SalesForce Org A and query all the existing Contacts that match the filter criteria.
-During the Process stage, each SFDC Contact will be filtered depending on, if it has an existing matching contact in the SFDC Org B and if the last updated date of the later is greater than the one of SFDC Org A.
-The last step of the Process stage will group the contacts and create them in SFDC Org B.
+The batch job is divided in Input, Process and On Complete stages.
+During the Input stage the Kick will go to the SalesForce Org A and query all the existing users that match the filter criteria.
+During the Process stage, each SFDC User will be filtered depending on, if it has an existing matching user in the SFDC Org B and if the last updated date of the later is greater than the one of SFDC Org A.
+The last step of the Process stage will group the users and create them in SFDC Org B.
 Finally during the On Complete stage the Kick will both otput statistics data into the console and send a notification email with the results of the batch excecution. 
 
 # Run it! <a name="runit"/>
 
-Simple steps to get SFDC to SFDC Contacts Sync running.
+Simple steps to get SFDC to SFDC User Migration running.
 
 In any of the ways you would like to run this Kick this is an example of the output you'll see after hitting the HTTP endpoint:
 
@@ -53,7 +53,7 @@ There are a couple of things you should take into account before running this ki
 
 While [creating your application on CloudHub](http://www.mulesoft.org/documentation/display/current/Hello+World+on+CloudHub) (Or you can do it later as a next step), you need to go to Deployment > Advanced to set all environment variables detailed in **Properties to be configured** as well as the **mule.env**. 
 
-Once your app is all set and started, supposing you choose as domain name `sfdccontactsync` to trigger the use case you just need to hit `http://sfdccontactsync.cloudhub.io/synccontacts` and report will be sent to the emails configured.
+Once your app is all set and started, supposing you choose as domain name `sfdcusermigration` to trigger the use case you just need to hit `http://sfdcusermigration.cloudhub.io/migrateusers` and report will be sent to the emails configured.
 
 ### Deploying your Kick on CloudHub <a name="deployingyourkickoncloudhub"/>
 Mule Studio provides you with really easy way to deploy your Kick directly to CloudHub, for the specific steps to do so please check this [link](http://www.mulesoft.org/documentation/display/current/Deploying+Mule+Applications#DeployingMuleApplications-DeploytoCloudHub)
@@ -62,7 +62,7 @@ Mule Studio provides you with really easy way to deploy your Kick directly to Cl
 ## Running on premise <a name="runonopremise"/>
 Complete all properties in one of the property files, for example in [mule.prod.properties] (../blob/master/src/main/resources/mule.prod.properties) and run your app with the corresponding environment variable to use it. To follow the example, this will be `mule.env=prod`.
 
-After this, to trigger the use case you just need to hit the local http endpoint with the port you configured in your file. If this is, for instance, `9090` then you should hit: `http://localhost:9090/synccontacts` and this will create a CSV report and send it to the mails set.
+After this, to trigger the use case you just need to hit the local http endpoint with the port you configured in your file. If this is, for instance, `9090` then you should hit: `http://localhost:9090/migrateusers` and this will create a CSV report and send it to the mails set.
 
 
 
@@ -88,7 +88,7 @@ In order to use this Mule Kick you need to configure properties (Credentials, co
 
 #### EMail Details
 + mail.from=batch.contact.migration%40mulesoft.com
-+ mail.to=damian.sima@mulesoft.com
++ mail.to=your.username@youremaildomain.com
 + mail.subject=Batch Job Finished Report
 
 # Customize It!<a name="customizeit"/>
