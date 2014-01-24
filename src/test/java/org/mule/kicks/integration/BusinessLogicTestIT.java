@@ -19,6 +19,7 @@ import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 import org.mule.api.context.notification.ServerNotification;
 import org.mule.construct.Flow;
+import org.mule.modules.salesforce.bulk.EnrichedUpsertResult;
 import org.mule.processor.chain.SubflowInterceptingChainLifecycleWrapper;
 import org.mule.tck.probe.PollingProber;
 import org.mule.tck.probe.Probe;
@@ -50,7 +51,7 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 	protected BatchJobInstanceStore jobInstanceStore;
 
 	private static SubflowInterceptingChainLifecycleWrapper checkUserflow;
-	private static List<Map<String, String>> createdUsers = new ArrayList<Map<String, String>>();
+	private static List<Map<String, Object>> createdUsers = new ArrayList<Map<String, Object>>();
 
 	protected class BatchWaitListener implements BatchNotificationListener {
 
@@ -104,12 +105,12 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 	}
 
 	@SuppressWarnings("unchecked")
-	private Map<String, String> invokeRetrieveUserFlow(SubflowInterceptingChainLifecycleWrapper flow, Map<String, String> user) throws Exception {
+	private Map<String, String> invokeRetrieveUserFlow(SubflowInterceptingChainLifecycleWrapper flow, Map<String, Object> user) throws Exception {
 		Map<String, String> userMap = new HashMap<String, String>();
 
-		userMap.put("Email", user.get("Email"));
-		userMap.put("FirstName", user.get("FirstName"));
-		userMap.put("LastName", user.get("LastName"));
+		userMap.put("Email", (String) user.get("Email"));
+		userMap.put("FirstName", (String) user.get("FirstName"));
+		userMap.put("LastName", (String) user.get("LastName"));
 
 		MuleEvent event = flow.process(getTestEvent(userMap, MessageExchangePattern.REQUEST_RESPONSE));
 		Object payload = event.getMessage().getPayload();
@@ -154,16 +155,16 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 		flow.initialise();
 
 		// This user should not be sync
-		Map<String, String> user = createUser("A", 0);
-		user.put("IsActive", "false");
+		Map<String, Object> user = createUser("A", 0);
+		user.put("IsActive", false);
 		createdUsers.add(user);
 
 		// This user should BE sync
 		user = createUser("A", 1);
 		createdUsers.add(user);
-
+		
 		MuleEvent event = flow.process(getTestEvent(createdUsers, MessageExchangePattern.REQUEST_RESPONSE));
-		List<SaveResult> results = (List<SaveResult>) event.getMessage().getPayload();
+		List<EnrichedUpsertResult> results = (List<org.mule.modules.salesforce.bulk.EnrichedUpsertResult>) event.getMessage().getPayload();
 		for (int i = 0; i < results.size(); i++) {
 			createdUsers.get(i).put("Id", results.get(i).getId());
 		}
@@ -175,8 +176,8 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 		flow.initialise();
 
 		List<String> idList = new ArrayList<String>();
-		for (Map<String, String> c : createdUsers) {
-			idList.add(c.get("Id"));
+		for (Map<String, Object> c : createdUsers) {
+			idList.add((String) c.get("Id"));
 		}
 		flow.process(getTestEvent(idList, MessageExchangePattern.REQUEST_RESPONSE));
 
@@ -184,7 +185,7 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 		flow = getSubFlow("deleteUserFromBFlow");
 		flow.initialise();
 		idList.clear();
-		for (Map<String, String> c : createdUsers) {
+		for (Map<String, Object> c : createdUsers) {
 			Map<String, String> user = invokeRetrieveUserFlow(checkUserflow, c);
 			if (user != null) {
 				idList.add(user.get("Id"));
@@ -193,12 +194,24 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 		flow.process(getTestEvent(idList, MessageExchangePattern.REQUEST_RESPONSE));
 	}
 
-	private Map<String, String> createUser(String orgId, int sequence) {
-		Map<String, String> user = new HashMap<String, String>();
+	private Map<String, Object> createUser(String orgId, int sequence) {
+		Map<String, Object> user = new HashMap<String, Object>();
 
+		
+//		SELECT Id, Email, FirstName, LastName, Username, Alias, TimeZoneSidKey, LocaleSidKey, EmailEncodingKey, ProfileId, LanguageLocaleKey, LastModifiedDate FROM User WHERE IsActive = true
 		user.put("FirstName", "FirstName_" + sequence);
 		user.put("LastName", "LastName_" + sequence);
-		user.put("IsActive", "true");
+		user.put("Alias", "Alias_" + sequence);
+		user.put("TimeZoneSidKey", "GMT");
+		user.put("LocaleSidKey", "en_US");
+		user.put("EmailEncodingKey", "ISO-8859-1");
+		
+		// TODO - Should remove this profile as it's a real one from the sandbox account and generate it
+		user.put("ProfileId", "00e80000001CDZBAA4");
+		
+		user.put("LanguageLocaleKey", "en_US");
+		user.put("IsActive", true);
+		user.put("Username", "some.email." + sequence + "@fakemail.com");
 		user.put("Email", "some.email." + sequence + "@fakemail.com");
 
 		return user;

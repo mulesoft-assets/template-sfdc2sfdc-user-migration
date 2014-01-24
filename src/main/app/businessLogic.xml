@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:smtp="http://www.mulesoft.org/schema/mule/smtp" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.5.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
+<mule xmlns:stdio="http://www.mulesoft.org/schema/mule/stdio" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:smtp="http://www.mulesoft.org/schema/mule/smtp" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.5.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/stdio http://www.mulesoft.org/schema/mule/stdio/current/mule-stdio.xsd
+http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
 http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfdc/current/mule-sfdc.xsd
@@ -11,20 +12,23 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
     <batch:job name="migrateUsersBatch">
         <batch:threading-profile poolExhaustedAction="WAIT"/>
         <batch:input>
-            <sfdc:query config-ref="SalesforceA" query="SELECT Id, Email, FirstName, LastName, Username, LastModifiedDate FROM User WHERE IsActive = true" doc:name="query Users from Salesforce instance A" fetchSize="${page.size}"/>
+            <sfdc:query config-ref="SalesforceA" query="SELECT Email, FirstName, LastName, Username, Alias, TimeZoneSidKey, LocaleSidKey, EmailEncodingKey, ProfileId, LanguageLocaleKey, LastModifiedDate FROM User WHERE IsActive = true AND LastModifiedDate &gt; #[groovy: new Date(System.currentTimeMillis() - 10000).format(&quot;yyyy-MM-dd'T'HH:mm:ss.SSS'Z'&quot;, TimeZone.getTimeZone('UTC'))]" doc:name="query Users from Salesforce instance A" fetchSize="${page.size}"/>
         </batch:input> 
         <batch:process-records>
             <batch:step name="getUserInBStep">
                 <enricher source="#[payload]" target="#[recordVars['userInB']]" doc:name="store result in record var 'userInB'">
                     <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, LastModifiedDate FROM User WHERE Email = '#[payload['Email']]'" doc:name="query user in Salesforce instance B"/>
                 </enricher>
+                <expression-component doc:name="remove Id from User"><![CDATA[payload.remove('Id');]]></expression-component>
+                <logger message="User in B = #[recordVars['userInB']]" level="ERROR" doc:name="log User in B"/>
             </batch:step>
             <batch:step name="selectNewerUserStep" filter-expression="#[recordVars['userInB'] is NullPayload]">
                 <choice doc:name="Choice">
                     <when expression="#[org.mule.kicks.util.UserDateComparator.isAfter(payload, recordVars['userInB'])]">
-                        <expression-component doc:name="define Id in SalesForce Intance B"><![CDATA[payload['Id'] = recordVars['userInB']['Id']
+                        <expression-component doc:name="define Id in SalesForce Intance B"><![CDATA[payload.put('Id', recordVars['userInB']['Id']);
 
 ]]></expression-component>
+                        <logger message="Added Id = #[payload]" level="ERROR" doc:name="log Added Id"/>
                     </when>
                     <otherwise>
                         <set-payload doc:name="set to null to skip this user" value="#[return null]"/>
@@ -32,13 +36,18 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 </choice>
             </batch:step>
             <batch:step name="createUsersInBStep" filter-expression="#[payload is NullPayload]">
-                <expression-component doc:name="remove Fields type and LastModifiedDate"><![CDATA[payload.remove('type'); 
+                <expression-component doc:name="assign ProfileId and Username to the User"><![CDATA[profilesMap = ['00e80000001CDZBAA4': '00e80000001CDZBAA4'];
+
+payload.put('Username',  payload['Username'] + '.target');
+payload.put('ProfileId', profilesMap.get( payload['ProfileId'] ));]]></expression-component>
+                <expression-component doc:name="remove Fields type and LastModifiedDate"><![CDATA[payload.remove('type');
 payload.remove('LastModifiedDate');]]></expression-component>
+                <logger message="User to create = #[payload]" level="ERROR" doc:name="log User to create"/>
                 <batch:commit size="200" doc:name="Batch Commit">
-					<sfdc:upsert config-ref="SalesforceB"  type="User" doc:name="upsert users in org B" externalIdFieldName="Id">
+					<sfdc:upsert config-ref="SalesforceB"  type="User" doc:name="upsert Users in org B" externalIdFieldName="Id">
                         <sfdc:objects ref="#[payload]"/>
 					</sfdc:upsert>
-                    <logger level="INFO" doc:name="Logger"/>
+                    <logger level="ERROR" doc:name="log Result" message="Result = #[payload]"/>
                 </batch:commit>
             </batch:step>
         </batch:process-records>
