@@ -9,7 +9,7 @@
         * [Properties to be configured](#propertiestobeconfigured)
 + [Customize It!](#customizeit)
     * [config.xml](#configxml)
-    * [endpoints.xml](#endpointsxml)
+    * [inboundEndpoints.xml](#endpointsxml)
     * [businessLogic.xml](#businesslogicxml)
     * [errorHandling.xml](#errorhandlingxml)
 + [Testing the Kick](#testingthekick)
@@ -87,9 +87,9 @@ In order to use this Mule Kick you need to configure properties (Credentials, co
 
 
 #### EMail Details
-+ mail.from=batch.contact.migration%40mulesoft.com
-+ mail.to=your.username@youremaildomain.com
-+ mail.subject=Batch Job Finished Report
++ mail.from `batch.contact.migration%40mulesoft.com`
++ mail.to `your.username@youremaildomain.com`
++ mail.subject `Batch Job Finished Report`
 
 # Customize It!<a name="customizeit"/>
 
@@ -100,7 +100,7 @@ Of course more files will be found such as Test Classes and [Mule Application Fi
 Here is a list of the main XML files you'll find in this application:
 
 * [config.xml](#configxml)
-* [endpoints.xml](#endpointsxml)
+* [inboundEndpoints.xml](#endpointsxml)
 * [businessLogic.xml](#businesslogicxml)
 * [errorHandling.xml](#errorhandlingxml)
 
@@ -110,7 +110,7 @@ Configuration for Connectors and [Properties Place Holders](http://www.mulesoft.
 
 In the visual editor they can be found on the *Global Element* tab.
 
-## endpoints.xml<a name="endpointsxml"/>
+## inboundEndpoints.xml<a name="endpointsxml"/>
 This is the file where you will found the inbound and outbound sides of your integration app.
 This Kick has only an [HTTP Inbound Endpoint](http://www.mulesoft.org/documentation/display/current/HTTP+Endpoint+Reference) as the way to trigger the use case.
 
