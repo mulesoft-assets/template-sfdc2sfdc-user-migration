@@ -6,7 +6,7 @@
     * [Running on CloudHub](#runoncloudhub)
     	* [Deploying your Kick on CloudHub](#deployingyourkickoncloudhub)
     * [Running on premise](#runonopremise)
-        * [Properties to be configured](#propertiestobeconfigured)
+    * [Properties to be configured](#propertiestobeconfigured)
 + [Customize It!](#customizeit)
     * [config.xml](#configxml)
     * [inboundEndpoints.xml](#endpointsxml)
