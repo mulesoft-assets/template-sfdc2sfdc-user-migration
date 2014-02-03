@@ -6,10 +6,10 @@
     * [Running on CloudHub](#runoncloudhub)
     	* [Deploying your Kick on CloudHub](#deployingyourkickoncloudhub)
     * [Running on premise](#runonopremise)
-    * [Properties to be configured](#propertiestobeconfigured)
+        * [Properties to be configured](#propertiestobeconfigured)
 + [Customize It!](#customizeit)
     * [config.xml](#configxml)
-    * [inboundEndpoints.xml](#endpointsxml)
+    * [endpoints.xml](#endpointsxml)
     * [businessLogic.xml](#businesslogicxml)
     * [errorHandling.xml](#errorhandlingxml)
 + [Testing the Kick](#testingthekick)
@@ -71,7 +71,8 @@ After this, to trigger the use case you just need to hit the local http endpoint
 In order to use this Mule Kick you need to configure properties (Credentials, configurations, etc.) either in properties file or in CloudHub as Environment Variables. Detail list with examples:
 
 ### Application configuration
-+ http.port `9090` 
++ http.port `9090`
++ startingDate `2014-01-30'T'00:00:00.000'Z'`
 
 #### SalesForce Connector configuration for company A
 + sfdc.a.username `bob.dylan@orga`
@@ -86,7 +87,7 @@ In order to use this Mule Kick you need to configure properties (Credentials, co
 + sfdc.b.url `https://login.salesforce.com/services/Soap/u/26.0`
 
 
-#### EMail Details
+#### eMail Details
 + mail.from `batch.contact.migration%40mulesoft.com`
 + mail.to `your.username@youremaildomain.com`
 + mail.subject `Batch Job Finished Report`
@@ -100,7 +101,7 @@ Of course more files will be found such as Test Classes and [Mule Application Fi
 Here is a list of the main XML files you'll find in this application:
 
 * [config.xml](#configxml)
-* [inboundEndpoints.xml](#endpointsxml)
+* [endpoints.xml](#endpointsxml)
 * [businessLogic.xml](#businesslogicxml)
 * [errorHandling.xml](#errorhandlingxml)
 
@@ -110,7 +111,7 @@ Configuration for Connectors and [Properties Place Holders](http://www.mulesoft.
 
 In the visual editor they can be found on the *Global Element* tab.
 
-## inboundEndpoints.xml<a name="endpointsxml"/>
+## endpoints.xml<a name="endpointsxml"/>
 This is the file where you will found the inbound and outbound sides of your integration app.
 This Kick has only an [HTTP Inbound Endpoint](http://www.mulesoft.org/documentation/display/current/HTTP+Endpoint+Reference) as the way to trigger the use case.
 
@@ -124,7 +125,7 @@ This Kick has only an [HTTP Inbound Endpoint](http://www.mulesoft.org/documentat
 
 ## businessLogic.xml<a name="businesslogicxml"/>
 Functional aspect of the kick is implemented on this XML, directed by one flow responsible of excecuting the logic.
-For the pourpose of this particular Kick the *mainFlow* just excecutes the Batch Job which handles all the logic of it.
+For the purpouse of this particular Kick the *mainFlow* just excecutes the Batch Job which handles all the logic of it.
 This flow has Exception Strategy that basically consists on invoking the *defaultChoiseExceptionStrategy* defined in *errorHandling.xml* file.
 
 

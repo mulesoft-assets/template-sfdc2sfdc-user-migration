@@ -3,7 +3,9 @@ package org.mule.kicks.integration;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
+import static org.mule.kicks.builders.UserBuilder.aUser;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,7 +18,9 @@ import org.mule.MessageExchangePattern;
 import org.mule.api.MuleEvent;
 import org.mule.api.MuleException;
 import org.mule.api.context.notification.ServerNotification;
+import org.mule.api.lifecycle.InitialisationException;
 import org.mule.construct.Flow;
+import org.mule.kicks.builders.UserBuilder;
 import org.mule.modules.salesforce.bulk.EnrichedUpsertResult;
 import org.mule.processor.chain.SubflowInterceptingChainLifecycleWrapper;
 import org.mule.tck.probe.PollingProber;
@@ -40,6 +44,10 @@ import com.mulesoft.module.batch.engine.BatchJobInstanceStore;
  * 
  */
 public class BusinessLogicTestIT extends AbstractKickTestCase {
+
+	private static final String KICK_NAME = "sfdc2sfdc-users-migration";
+
+	// TODO - Replace this ProfileId with one of your own org
 	private static final String DEFAULT_PROFILE_ID = "00e80000001CDZBAA4";
 
 	protected static final int TIMEOUT = 60;
@@ -72,8 +80,7 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 		jobInstanceStore = muleContext.getRegistry().lookupObject(BatchJobInstanceStore.class);
 		muleContext.registerListener(new BatchWaitListener());
 
-		checkUserflow = getSubFlow("retrieveUserFlow");
-		checkUserflow.initialise();
+		checkUserflow = getSubFlowAndInitialiseIt("retrieveUserFlow");
 
 		createTestDataInSandBox();
 	}
@@ -104,11 +111,11 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 
 	@SuppressWarnings("unchecked")
 	private Map<String, String> invokeRetrieveUserFlow(SubflowInterceptingChainLifecycleWrapper flow, Map<String, Object> user) throws Exception {
-		Map<String, String> userMap = new HashMap<String, String>();
+		Map<String, Object> userMap = new HashMap<String, Object>();
 
-		userMap.put("Email", (String) user.get("Email"));
-		userMap.put("FirstName", (String) user.get("FirstName"));
-		userMap.put("LastName", (String) user.get("LastName"));
+		userMap.put("Email", user.get("Email"));
+		userMap.put("FirstName", user.get("FirstName"));
+		userMap.put("LastName", user.get("LastName"));
 
 		MuleEvent event = flow.process(getTestEvent(userMap, MessageExchangePattern.REQUEST_RESPONSE));
 		Object payload = event.getMessage().getPayload();
@@ -149,18 +156,35 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 
 	@SuppressWarnings("unchecked")
 	private void createTestDataInSandBox() throws MuleException, Exception {
-		SubflowInterceptingChainLifecycleWrapper flow = getSubFlow("createUserFlow");
-		flow.initialise();
+		SubflowInterceptingChainLifecycleWrapper flow = getSubFlowAndInitialiseIt("createUserFlow");
+
+		UserBuilder baseUser = aUser() //
+				.with("TimeZoneSidKey", "GMT") //
+				.with("LocaleSidKey", "en_US") //
+				.with("EmailEncodingKey", "ISO-8859-1") //
+				.with("LanguageLocaleKey", "en_US") //
+				.with("ProfileId", DEFAULT_PROFILE_ID);
 
 		// This user should not be sync
-		Map<String, Object> user = createUser("A", 0);
-		user.put("IsActive", false);
-		createdUsers.add(user);
+		createdUsers.add(baseUser //
+				.with("FirstName", "FirstName_0") //
+				.with("LastName", "LastName_0") //
+				.with("Alias", "Alias_0") //
+				.with("IsActive", false) //
+				.with("Username", generateUnique("some.email.0@fakemail.com")) //
+				.with("Email", "some.email.0@fakemail.com") //
+				.build());
 
 		// This user should BE sync
-		user = createUser("A", 1);
-		createdUsers.add(user);
-		
+		createdUsers.add(baseUser //
+				.with("FirstName", "FirstName_1") //
+				.with("LastName", "LastName_1") //
+				.with("Alias", "Alias_" + 1) //
+				.with("IsActive", true) //
+				.with("Username", generateUnique("some.email.1@fakemail.com")) //
+				.with("Email", "some.email.1@fakemail.com") //
+				.build());
+
 		MuleEvent event = flow.process(getTestEvent(createdUsers, MessageExchangePattern.REQUEST_RESPONSE));
 		List<EnrichedUpsertResult> results = (List<org.mule.modules.salesforce.bulk.EnrichedUpsertResult>) event.getMessage().getPayload();
 		for (int i = 0; i < results.size(); i++) {
@@ -170,8 +194,7 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 
 	private void deleteTestDataFromSandBox() throws MuleException, Exception {
 		// Delete the created users in A
-		SubflowInterceptingChainLifecycleWrapper flow = getSubFlow("deleteUserFromAFlow");
-		flow.initialise();
+		SubflowInterceptingChainLifecycleWrapper flow = getSubFlowAndInitialiseIt("deleteUserFromAFlow");
 
 		List<String> idList = new ArrayList<String>();
 		for (Map<String, Object> c : createdUsers) {
@@ -180,8 +203,8 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 		flow.process(getTestEvent(idList, MessageExchangePattern.REQUEST_RESPONSE));
 
 		// Delete the created users in B
-		flow = getSubFlow("deleteUserFromBFlow");
-		flow.initialise();
+		flow = getSubFlowAndInitialiseIt("deleteUserFromBFlow");
+
 		idList.clear();
 		for (Map<String, Object> c : createdUsers) {
 			Map<String, String> user = invokeRetrieveUserFlow(checkUserflow, c);
@@ -192,24 +215,14 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 		flow.process(getTestEvent(idList, MessageExchangePattern.REQUEST_RESPONSE));
 	}
 
-	private Map<String, Object> createUser(String orgId, int sequence) {
-		Map<String, Object> user = new HashMap<String, Object>();
-
-		user.put("FirstName", "FirstName_" + sequence);
-		user.put("LastName", "LastName_" + sequence);
-		user.put("Alias", "Alias_" + sequence);
-		user.put("TimeZoneSidKey", "GMT");
-		user.put("LocaleSidKey", "en_US");
-		user.put("EmailEncodingKey", "ISO-8859-1");
-		
-		// TODO - Replace this ProfileId with one of your own org
-		user.put("ProfileId", DEFAULT_PROFILE_ID);
-		
-		user.put("LanguageLocaleKey", "en_US");
-		user.put("IsActive", true);
-		user.put("Username", "some.email." + sequence + "@fakemail.com");
-		user.put("Email", "some.email." + sequence + "@fakemail.com");
-
-		return user;
+	private SubflowInterceptingChainLifecycleWrapper getSubFlowAndInitialiseIt(String name) throws InitialisationException {
+		SubflowInterceptingChainLifecycleWrapper subFlow = getSubFlow(name);
+		subFlow.initialise();
+		return subFlow;
 	}
+
+	private String generateUnique(String string) {
+		return MessageFormat.format("{0}-{1}-{2}", KICK_NAME, System.currentTimeMillis(), string);
+	}
+
 }
