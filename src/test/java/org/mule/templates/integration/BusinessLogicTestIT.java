@@ -3,7 +3,7 @@ package org.mule.templates.integration;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
-import static org.mule.templates.builders.UserBuilder.aUser;
+import static org.mule.templates.builders.SfdcObjectBuilder.aUser;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -25,7 +25,7 @@ import org.mule.processor.chain.SubflowInterceptingChainLifecycleWrapper;
 import org.mule.tck.probe.PollingProber;
 import org.mule.tck.probe.Probe;
 import org.mule.tck.probe.Prober;
-import org.mule.templates.builders.UserBuilder;
+import org.mule.templates.builders.SfdcObjectBuilder;
 import org.mule.transport.NullPayload;
 
 import com.mulesoft.module.batch.api.BatchJobInstance;
@@ -160,7 +160,7 @@ public class BusinessLogicTestIT extends AbstractTemplatesTestCase {
 	private void createTestDataInSandBox() throws MuleException, Exception {
 		SubflowInterceptingChainLifecycleWrapper flow = getSubFlowAndInitialiseIt("createUserFlow");
 
-		UserBuilder baseUser = aUser() //
+		SfdcObjectBuilder baseUser = aUser() //
 		.with("TimeZoneSidKey", "GMT")
 										//
 										.with("LocaleSidKey", "en_US")
