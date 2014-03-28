@@ -1,4 +1,4 @@
-package org.mule.kicks.util;
+package org.mule.templates.util;
 
 import java.util.Map;
 
@@ -8,12 +8,9 @@ import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
 /**
- * The function of this class is to establish a relation happens before between
- * two maps representing SFDC users.
+ * The function of this class is to establish a relation happens before between two maps representing SFDC users.
  * 
- * It's assumed that these maps are well formed maps from SFDC thus they both
- * contain an entry with the expected key. Never the less validations are being
- * done.
+ * It's assumed that these maps are well formed maps from SFDC thus they both contain an entry with the expected key. Never the less validations are being done.
  * 
  * @author damiansima
  */
@@ -27,8 +24,7 @@ public class UserDateComparator {
 	 *            SFDC user map
 	 * @param userB
 	 *            SFDC user map
-	 * @return true if the last modified date from userA is after the one
-	 *         from user B
+	 * @return true if the last modified date from userA is after the one from user B
 	 */
 	public static boolean isAfter(Map<String, String> userA, Map<String, String> userB) {
 		Validate.notNull(userA, "The user A should not be null");

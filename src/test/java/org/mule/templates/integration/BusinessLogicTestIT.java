@@ -1,9 +1,9 @@
-package org.mule.kicks.integration;
+package org.mule.templates.integration;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNull;
 import static junit.framework.Assert.assertTrue;
-import static org.mule.kicks.builders.UserBuilder.aUser;
+import static org.mule.templates.builders.UserBuilder.aUser;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -20,12 +20,12 @@ import org.mule.api.MuleException;
 import org.mule.api.context.notification.ServerNotification;
 import org.mule.api.lifecycle.InitialisationException;
 import org.mule.construct.Flow;
-import org.mule.kicks.builders.UserBuilder;
 import org.mule.modules.salesforce.bulk.EnrichedUpsertResult;
 import org.mule.processor.chain.SubflowInterceptingChainLifecycleWrapper;
 import org.mule.tck.probe.PollingProber;
 import org.mule.tck.probe.Probe;
 import org.mule.tck.probe.Prober;
+import org.mule.templates.builders.UserBuilder;
 import org.mule.transport.NullPayload;
 
 import com.mulesoft.module.batch.api.BatchJobInstance;
@@ -35,15 +35,13 @@ import com.mulesoft.module.batch.engine.BatchJobInstanceAdapter;
 import com.mulesoft.module.batch.engine.BatchJobInstanceStore;
 
 /**
- * The objective of this class is to validate the correct behavior of the Mule
- * Kick that make calls to external systems.
+ * The objective of this class is to validate the correct behavior of the Mule Kick that make calls to external systems.
  * 
- * The test will invoke the batch process and afterwards check that the users
- * had been correctly created and that the ones that should be filtered are not
- * in the destination sand box.
+ * The test will invoke the batch process and afterwards check that the users had been correctly created and that the ones that should be filtered are not in
+ * the destination sand box.
  * 
  */
-public class BusinessLogicTestIT extends AbstractKickTestCase {
+public class BusinessLogicTestIT extends AbstractTemplatesTestCase {
 
 	private static final String KICK_NAME = "sfdc2sfdc-users-migration";
 
@@ -77,7 +75,8 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 	@Before
 	public void setUp() throws Exception {
 		failed = null;
-		jobInstanceStore = muleContext.getRegistry().lookupObject(BatchJobInstanceStore.class);
+		jobInstanceStore = muleContext.getRegistry()
+										.lookupObject(BatchJobInstanceStore.class);
 		muleContext.registerListener(new BatchWaitListener());
 
 		checkUserflow = getSubFlowAndInitialiseIt("retrieveUserFlow");
@@ -95,7 +94,8 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 	public void testMainFlow() throws Exception {
 		Flow flow = getFlow("mainFlow");
 		MuleEvent event = flow.process(getTestEvent("", MessageExchangePattern.REQUEST_RESPONSE));
-		BatchJobInstance batchJobInstance = (BatchJobInstance) event.getMessage().getPayload();
+		BatchJobInstance batchJobInstance = (BatchJobInstance) event.getMessage()
+																	.getPayload();
 
 		this.awaitJobTermination();
 
@@ -106,7 +106,8 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 		assertNull("The user should not have been sync", invokeRetrieveUserFlow(checkUserflow, createdUsers.get(0)));
 
 		Map<String, String> payload = invokeRetrieveUserFlow(checkUserflow, createdUsers.get(1));
-		assertEquals("The user should have been sync", createdUsers.get(1).get("Email"), payload.get("Email"));
+		assertEquals("The user should have been sync", createdUsers.get(1)
+																	.get("Email"), payload.get("Email"));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -118,7 +119,8 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 		userMap.put("LastName", user.get("LastName"));
 
 		MuleEvent event = flow.process(getTestEvent(userMap, MessageExchangePattern.REQUEST_RESPONSE));
-		Object payload = event.getMessage().getPayload();
+		Object payload = event.getMessage()
+								.getPayload();
 		if (payload instanceof NullPayload) {
 			return null;
 		} else {
@@ -159,36 +161,55 @@ public class BusinessLogicTestIT extends AbstractKickTestCase {
 		SubflowInterceptingChainLifecycleWrapper flow = getSubFlowAndInitialiseIt("createUserFlow");
 
 		UserBuilder baseUser = aUser() //
-				.with("TimeZoneSidKey", "GMT") //
-				.with("LocaleSidKey", "en_US") //
-				.with("EmailEncodingKey", "ISO-8859-1") //
-				.with("LanguageLocaleKey", "en_US") //
-				.with("ProfileId", DEFAULT_PROFILE_ID);
+		.with("TimeZoneSidKey", "GMT")
+										//
+										.with("LocaleSidKey", "en_US")
+										//
+										.with("EmailEncodingKey", "ISO-8859-1")
+										//
+										.with("LanguageLocaleKey", "en_US")
+										//
+										.with("ProfileId", DEFAULT_PROFILE_ID);
 
 		// This user should not be sync
 		createdUsers.add(baseUser //
-				.with("FirstName", "FirstName_0") //
-				.with("LastName", "LastName_0") //
-				.with("Alias", "Alias_0") //
-				.with("IsActive", false) //
-				.with("Username", generateUnique("some.email.0@fakemail.com")) //
-				.with("Email", "some.email.0@fakemail.com") //
-				.build());
+		.with("FirstName", "FirstName_0")
+									//
+									.with("LastName", "LastName_0")
+									//
+									.with("Alias", "Alias_0")
+									//
+									.with("IsActive", false)
+									//
+									.with("Username", generateUnique("some.email.0@fakemail.com"))
+									//
+									.with("Email", "some.email.0@fakemail.com")
+									//
+									.build());
 
 		// This user should BE sync
 		createdUsers.add(baseUser //
-				.with("FirstName", "FirstName_1") //
-				.with("LastName", "LastName_1") //
-				.with("Alias", "Alias_" + 1) //
-				.with("IsActive", true) //
-				.with("Username", generateUnique("some.email.1@fakemail.com")) //
-				.with("Email", "some.email.1@fakemail.com") //
-				.build());
+		.with("FirstName", "FirstName_1")
+									//
+									.with("LastName", "LastName_1")
+									//
+									.with("Alias", "Alias_" + 1)
+									//
+									.with("IsActive", true)
+									//
+									.with("Username", generateUnique("some.email.1@fakemail.com"))
+									//
+									.with("Email", "some.email.1@fakemail.com")
+									//
+									.build());
 
 		MuleEvent event = flow.process(getTestEvent(createdUsers, MessageExchangePattern.REQUEST_RESPONSE));
-		List<EnrichedUpsertResult> results = (List<org.mule.modules.salesforce.bulk.EnrichedUpsertResult>) event.getMessage().getPayload();
+		List<EnrichedUpsertResult> results = (List<org.mule.modules.salesforce.bulk.EnrichedUpsertResult>) event.getMessage()
+																												.getPayload();
 		for (int i = 0; i < results.size(); i++) {
-			createdUsers.get(i).put("Id", results.get(i).getId());
+			createdUsers.get(i)
+						.put("Id", results.get(i)
+											.getId());
 		}
 	}
 

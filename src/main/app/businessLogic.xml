@@ -24,7 +24,7 @@ payload.remove('Id');]]></expression-component>
             </batch:step>
             <batch:step name="selectNewerUserStep" filter-expression="#[recordVars['userInB'] is NullPayload]">
                 <choice doc:name="Choice">
-                    <when expression="#[org.mule.kicks.util.UserDateComparator.isAfter(payload, recordVars['userInB'])]">
+                    <when expression="#[org.mule.templates.util.UserDateComparator.isAfter(payload, recordVars['userInB'])]">
                         <expression-component doc:name="define Id in SalesForce Intance B"><![CDATA[// Put ID from the object in B so that SalesForce updates this object
 payload.put('Id', recordVars['userInB']['Id']);]]></expression-component>
                     </when>
