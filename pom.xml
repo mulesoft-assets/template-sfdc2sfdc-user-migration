@@ -450,7 +450,40 @@
 			<version>${sfdc.version}</version>
 		</dependency>
 
+
 		<!-- for testing -->
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>2.4</version>
+			<!-- <scope>test</scope> -->
+		</dependency>
+		<dependency>
+			<groupId>commons-collections</groupId>
+			<artifactId>commons-collections</artifactId>
+			<version>3.2.1</version>
+			<!-- <scope>test</scope> -->
+		</dependency>
+
+		<dependency>
+			<groupId>org.mule</groupId>
+			<artifactId>mule-core</artifactId>
+			<version>${mule.version}</version>
+			<scope>test</scope>
+			<type>test-jar</type>
+		</dependency>
+		<dependency>
+			<groupId>mockobjects</groupId>
+			<artifactId>mockobjects-core</artifactId>
+			<version>0.09</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.mule.tests</groupId>
 			<artifactId>mule-tests-functional</artifactId>
@@ -470,17 +503,38 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>mockobjects</groupId>
-			<artifactId>mockobjects-core</artifactId>
-			<version>0.09</version>
+			<groupId>com.mulesoft.muleesb.modules</groupId>
+			<artifactId>mule-module-batch-ee</artifactId>
+			<version>${mule.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>${junit.version}</version>
+			<groupId>com.mulesoft.muleesb.modules</groupId>
+			<artifactId>mule-module-batch-ee</artifactId>
+			<version>${mule.version}</version>
 			<scope>test</scope>
+			<type>test-jar</type>
 		</dependency>
+
+		<dependency>
+			<groupId>joda-time</groupId>
+			<artifactId>joda-time</artifactId>
+			<version>1.6.2</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>1.4</version>
+		</dependency>
+		
+		
+		<dependency>
+			<groupId>org.apache.geronimo.specs</groupId>
+			<artifactId>geronimo-j2ee-connector_1.5_spec</artifactId>
+			<version>1.1</version>
+		</dependency>
+
 		<!-- Munit -->
 		<dependency>
 			<groupId>org.mule.munit</groupId>
@@ -489,9 +543,9 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<groupId>com.mulesoft.muleesb.modules</groupId>
-			<artifactId>mule-module-batch-ee</artifactId>
-			<version>${mule.version}</version>
+			<groupId>org.mule.munit</groupId>
+			<artifactId>munit-assert</artifactId>
+			<version>${munit.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
