@@ -6,6 +6,7 @@
     * [Running on premise](#runonopremise)
     * [Running on CloudHub](#runoncloudhub)
     * [Properties to be configured](#propertiestobeconfigured)
++ [API Calls](#apicalls)
 + [Customize It!](#customizeit)
     * [config.xml](#configxml)
     * [endpoints.xml](#endpointsxml)
@@ -73,7 +74,7 @@ While [creating your application on CloudHub](http://www.mulesoft.org/documentat
 
 Once your app is all set and started, supposing you choose as domain name `sfdcusermigration` to trigger the use case you just need to hit `http://sfdcusermigration.cloudhub.io/migrateUsers` and report will be sent to the emails configured.
 
-### Deploying your Anypoint Template on CloudHub <a name="deployingyourkickoncloudhub"/>
+### Deploying your Anypoint Template on CloudHub <a name="deployingyouranypointtemplateoncloudhub"/>
 Mule Studio provides you with really easy way to deploy your Anypoint Template directly to CloudHub, for the specific steps to do so please check this [link](http://www.mulesoft.org/documentation/display/current/Deploying+Mule+Applications#DeployingMuleApplications-DeploytoCloudHub)
 
 
@@ -102,6 +103,20 @@ In order to use this Anypoint template you need to configure properties (Credent
 + mail.from `batch.user.migration%40mulesoft.com`
 + mail.to `your.username@youremaildomain.com`
 + mail.subject `Batch Job Finished Report`
+
+# API Calls <a name="apicalls"/>
+
+SalesForce imposes limits on the number of API Calls that can be made. Therefore calculating this amount may be an important factor to consider. User Migration Template calls to the API can be calculated using the formula:
+
+***1 + X / 200***
+
+Being ***X*** the number of Users to be synchronized on each run. 
+
+The division by ***200*** is because, by default, Users are gathered in groups of 200 for each Upsert API Call in the commit step.	
+
+For instance if 10 records are fetched from origin instance, then 34 api calls will be made (1 + 10). 
+
+
 
 # Customize It!<a name="customizeit"/>
 
