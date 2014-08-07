@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:stdio="http://www.mulesoft.org/schema/mule/stdio" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:smtp="http://www.mulesoft.org/schema/mule/smtp" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.5.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/stdio http://www.mulesoft.org/schema/mule/stdio/current/mule-stdio.xsd
+<mule xmlns:stdio="http://www.mulesoft.org/schema/mule/stdio" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:smtp="http://www.mulesoft.org/schema/mule/smtp" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.5.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/stdio http://www.mulesoft.org/schema/mule/stdio/current/mule-stdio.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
@@ -34,15 +34,18 @@ payload.put('Id', recordVars['userInB']['Id']);]]></expression-component>
                 </choice>
             </batch:step>
             <batch:step name="createUsersInBStep" filter-expression="#[payload is NullPayload]">
-                <expression-component doc:name="assign ProfileId and Username to the User"><![CDATA[// We map the profile IDs from SalesForce instance A to B, each profileId from the left (source instance) will be map to the one on the right (target instance)
+                <expression-component doc:name="stetup User for upsert"><![CDATA[payload.put('Id', recordVars['userInB'] is NullPayload ? null : recordVars['userInB']['Id']);
+
+// We map the profile IDs from SalesForce instance A to B, each profileId from the left (source instance) will be map to the one on the right (target instance)
 // TODO - You should change these IDs to the ones corresponding to your SalesForce instances profile IDs
 profilesMap = ['00e80000001CDZBAA4': '00e80000001CDZBAA4'];
 payload.put('ProfileId', profilesMap.get( payload['ProfileId'] ));
 
 // TODO - Each Username should be UNIQUE even between different sandboxes of a single instance
 // If you are trying this kick with one instance and multiple sandboxes, please make sure that the target username is not the same as the original as a duplicated username error will come up
-payload.put('Username',  payload['Username'] + '.target');]]></expression-component>
-                <expression-component doc:name="remove fields type and LastModifiedDate"><![CDATA[// We remove these fields as they are internally managed by SalesForce and it is not valid to create/update an object with them
+payload.put('Username',  payload['Username'] + '.target');
+
+// We remove these fields as they are internally managed by SalesForce and it is not valid to create/update an object with them
 payload.remove('type');
 payload.remove('LastModifiedDate');]]></expression-component>
                 <logger message="User to create: #[payload]" level="ERROR" doc:name="log User to create"/>
