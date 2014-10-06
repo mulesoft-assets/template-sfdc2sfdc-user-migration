@@ -19,27 +19,21 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
                 <enricher source="#[payload]" target="#[recordVars['userInB']]" doc:name="store result in record var 'userInB'">
                     <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, LastModifiedDate FROM User WHERE Email = '#[payload['Email']]'" doc:name="query user in Salesforce instance B"/>
                 </enricher>
-                <expression-component doc:name="remove Id from User"><![CDATA[// ID from source system should be removed, as SalesForce will assign it automatically
-payload.remove('Id');]]></expression-component>
-            </batch:step>
-            <batch:step name="selectNewerUserStep" filter-expression="#[recordVars['userInB'] is NullPayload]">
-                <choice doc:name="Choice">
-                    <when expression="#[org.mule.templates.util.UserDateComparator.isAfter(payload, recordVars['userInB'])]">
-                        <expression-component doc:name="define Id in SalesForce Intance B"><![CDATA[// Put ID from the object in B so that SalesForce updates this object
-payload.put('Id', recordVars['userInB']['Id']);]]></expression-component>
-                    </when>
-                    <otherwise>
-                        <set-payload doc:name="set to null to skip this user" value="#[return null]"/>
-                    </otherwise>
-                </choice>
-            </batch:step>
-            <batch:step name="createUsersInBStep" filter-expression="#[payload is NullPayload]">
-                <expression-component doc:name="stetup User for upsert"><![CDATA[payload.put('Id', recordVars['userInB'] is NullPayload ? null : recordVars['userInB']['Id']);
 
-// We map the profile IDs from SalesForce instance A to B, each profileId from the left (source instance) will be map to the one on the right (target instance)
-// TODO - You should change these IDs to the ones corresponding to your SalesForce instances profile IDs
-profilesMap = ['00e80000001CDZBAA4': '00e80000001CDZBAA4'];
-payload.put('ProfileId', profilesMap.get( payload['ProfileId'] ));
+            </batch:step>
+
+            <batch:step name="createUsersInBStep" accept-expression="!(payload is NullPayload) &amp;&amp; '${sfdc.a.profile.id}' == payload['ProfileId']">
+                <logger message="SOM DNU" level="ERROR" doc:name="Logger"/>
+                <expression-component doc:name="setup User for upsert"><![CDATA[if (recordVars['userInB'] is NullPayload) {
+	// Remove ID as it is an insert
+	payload.remove('Id')
+} else {
+	// Add target system ID as it is an update
+    payload.put('Id', recordVars['userInB']['Id'])
+}
+
+// We should change these IDs to the ones corresponding to your SalesForce instances profile IDs
+payload.put('ProfileId',  '${sfdc.b.profile.id}');
 
 // TODO - Each Username should be UNIQUE even between different sandboxes of a single instance
 // If you are trying this kick with one instance and multiple sandboxes, please make sure that the target username is not the same as the original as a duplicated username error will come up
@@ -48,6 +42,7 @@ payload.put('Username',  payload['Username'] + '.target');
 // We remove these fields as they are internally managed by SalesForce and it is not valid to create/update an object with them
 payload.remove('type');
 payload.remove('LastModifiedDate');]]></expression-component>
+
                 <logger message="User to create: #[payload]" level="ERROR" doc:name="log User to create"/>
                 <batch:commit size="200" doc:name="Batch Commit">
 					<sfdc:upsert config-ref="SalesforceB"  type="User" doc:name="upsert Users in org B" externalIdFieldName="Id">
