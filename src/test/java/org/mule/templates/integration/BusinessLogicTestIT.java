@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mule.MessageExchangePattern;
@@ -69,13 +68,7 @@ public class BusinessLogicTestIT extends AbstractTemplateTestCase {
 		retrieveUserFlow.initialise();
 
 		createTestDataInSandBox();
-	}
-
-	@After
-	public void tearDown() throws Exception {
-		// failed = null;
-		deleteTestDataFromSandBox();
-	}
+	}	
 
 	@Test
 	public void testMainFlow() throws Exception {
@@ -131,33 +124,7 @@ public class BusinessLogicTestIT extends AbstractTemplateTestCase {
 			createdUsers.get(i).put("Id", results.get(i).getId());
 		}
 	}
-
-	private void deleteTestDataFromSandBox() throws MuleException, Exception {
-		// Delete the created users in A
-		SubflowInterceptingChainLifecycleWrapper deleteUserFromAFlow = getSubFlow("deleteUserFromAFlow");
-		deleteUserFromAFlow.initialise();
-
-		List<String> idList = new ArrayList<String>();
-		for (Map<String, Object> c : createdUsers) {
-			idList.add((String) c.get("Id"));
-		}
-		deleteUserFromAFlow.process(getTestEvent(idList,
-				MessageExchangePattern.REQUEST_RESPONSE));
-
-		// Delete the created users in B
-		SubflowInterceptingChainLifecycleWrapper deleteUserFromBFlow = getSubFlow("deleteUserFromBFlow");
-		deleteUserFromBFlow.initialise();
-
-		idList.clear();
-		for (Map<String, Object> c : createdUsers) {
-			Map<String, Object> user = invokeRetrieveFlow(retrieveUserFlow, c);
-			if (user != null) {
-				idList.add((String) user.get("Id"));
-			}
-		}
-		deleteUserFromBFlow.process(getTestEvent(idList,
-				MessageExchangePattern.REQUEST_RESPONSE));
-	}
+	
 
 	private String generateUnique(String string) {
 		return MessageFormat.format("{0}-{1}-{2}", KICK_NAME,
