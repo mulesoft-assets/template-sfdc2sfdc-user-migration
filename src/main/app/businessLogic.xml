@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:stdio="http://www.mulesoft.org/schema/mule/stdio" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:smtp="http://www.mulesoft.org/schema/mule/smtp" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.5.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/stdio http://www.mulesoft.org/schema/mule/stdio/current/mule-stdio.xsd
+<mule xmlns:stdio="http://www.mulesoft.org/schema/mule/stdio" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:smtp="http://www.mulesoft.org/schema/mule/smtp" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.5.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/stdio http://www.mulesoft.org/schema/mule/stdio/current/mule-stdio.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
@@ -16,14 +16,16 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
         </batch:input> 
         <batch:process-records>
             <batch:step name="getUserInBStep">
+
                 <enricher source="#[payload]" target="#[recordVars['userInB']]" doc:name="store result in record var 'userInB'">
                     <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, LastModifiedDate FROM User WHERE Email = '#[payload['Email']]'" doc:name="query user in Salesforce instance B"/>
                 </enricher>
 
+
             </batch:step>
 
             <batch:step name="createUsersInBStep" accept-expression="!(payload is NullPayload) &amp;&amp; '${sfdc.a.profile.id}' == payload['ProfileId']">
-                <logger message="SOM DNU" level="ERROR" doc:name="Logger"/>
+
                 <expression-component doc:name="setup User for upsert"><![CDATA[if (recordVars['userInB'] is NullPayload) {
 	// Remove ID as it is an insert
 	payload.remove('Id')
@@ -43,11 +45,12 @@ payload.put('Username',  payload['Username'] + '.target');
 payload.remove('type');
 payload.remove('LastModifiedDate');]]></expression-component>
 
-                <logger message="User to create: #[payload]" level="ERROR" doc:name="log User to create"/>
+                <logger message="User to create: #[payload]" level="INFO" doc:name="log User to create"/>
                 <batch:commit size="200" doc:name="Batch Commit">
 					<sfdc:upsert config-ref="SalesforceB"  type="User" doc:name="upsert Users in org B" externalIdFieldName="Id">
                         <sfdc:objects ref="#[payload]"/>
 					</sfdc:upsert>
+
                 </batch:commit>
             </batch:step>
         </batch:process-records>

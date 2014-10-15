@@ -10,10 +10,12 @@ import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNull;
 import static org.mule.templates.builders.SfdcObjectBuilder.aUser;
 
+import java.io.FileInputStream;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.junit.After;
 import org.junit.Before;
@@ -39,23 +41,32 @@ import com.mulesoft.module.batch.BatchTestHelper;
 public class BusinessLogicTestIT extends AbstractTemplateTestCase {
 
 	private static final String KICK_NAME = "sfdc2sfdc-users-migration";
+	private static final String PATH_TO_TEST_PROPERTIES = "./src/test/resources/mule.test.properties";
 
 	// TODO - Replace this ProfileId with one of your own org
-	private static final String DEFAULT_PROFILE_ID = "00e80000001CDZBAA4";
+	private static String DEFAULT_PROFILE_ID;
 
 	protected static final int TIMEOUT_SEC = 60;
 
-	private static SubflowInterceptingChainLifecycleWrapper retriveUserFlow;
+	private static SubflowInterceptingChainLifecycleWrapper retrieveUserFlow;
 	private static List<Map<String, Object>> createdUsers = new ArrayList<Map<String, Object>>();
 
 	private BatchTestHelper helper;
 
 	@Before
 	public void setUp() throws Exception {
+		final Properties props = new Properties();
+		try {
+			props.load(new FileInputStream(PATH_TO_TEST_PROPERTIES));
+		} catch (Exception e) {
+			logger.error("Error occured while reading mule.test.properties", e);
+		}
+		DEFAULT_PROFILE_ID = props.getProperty("sfdc.a.profile.id");
+		
 		helper = new BatchTestHelper(muleContext);
 
-		retriveUserFlow = getSubFlow("retrieveUserFlow");
-		retriveUserFlow.initialise();
+		retrieveUserFlow = getSubFlow("retrieveUserFlow");
+		retrieveUserFlow.initialise();
 
 		createTestDataInSandBox();
 	}
@@ -76,12 +87,12 @@ public class BusinessLogicTestIT extends AbstractTemplateTestCase {
 		helper.assertJobWasSuccessful();
 
 		assertNull("The user should not have been sync",
-				invokeRetrieveFlow(retriveUserFlow, createdUsers.get(0)));
+				invokeRetrieveFlow(retrieveUserFlow, createdUsers.get(0)));
 
-		Map<String, Object> payload = invokeRetrieveFlow(retriveUserFlow,
+		Map<String, Object> payload = invokeRetrieveFlow(retrieveUserFlow,
 				createdUsers.get(1));
 		assertEquals("The user should have been sync",
-				createdUsers.get(1).get("Email"), payload.get("Email"));
+				createdUsers.get(1).get("Username") + ".target", payload.get("Username"));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -116,6 +127,7 @@ public class BusinessLogicTestIT extends AbstractTemplateTestCase {
 		List<EnrichedUpsertResult> results = (List<org.mule.modules.salesforce.bulk.EnrichedUpsertResult>) event
 				.getMessage().getPayload();
 		for (int i = 0; i < results.size(); i++) {
+			logger.info("upsert result: " + results.get(i));
 			createdUsers.get(i).put("Id", results.get(i).getId());
 		}
 	}
@@ -138,7 +150,7 @@ public class BusinessLogicTestIT extends AbstractTemplateTestCase {
 
 		idList.clear();
 		for (Map<String, Object> c : createdUsers) {
-			Map<String, Object> user = invokeRetrieveFlow(retriveUserFlow, c);
+			Map<String, Object> user = invokeRetrieveFlow(retrieveUserFlow, c);
 			if (user != null) {
 				idList.add((String) user.get("Id"));
 			}
@@ -149,7 +161,7 @@ public class BusinessLogicTestIT extends AbstractTemplateTestCase {
 
 	private String generateUnique(String string) {
 		return MessageFormat.format("{0}-{1}-{2}", KICK_NAME,
-				System.currentTimeMillis(), string);
+				System.currentTimeMillis(), string).replace(",", "");
 	}
 
 }
