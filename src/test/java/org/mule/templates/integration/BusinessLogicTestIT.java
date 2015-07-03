@@ -42,7 +42,6 @@ public class BusinessLogicTestIT extends AbstractTemplateTestCase {
 	private static final String KICK_NAME = "sfdc2sfdc-users-migration";
 	private static final String PATH_TO_TEST_PROPERTIES = "./src/test/resources/mule.test.properties";
 
-	// TODO - Replace this ProfileId with one of your own org
 	private static String DEFAULT_PROFILE_ID;
 
 	protected static final int TIMEOUT_SEC = 60;
