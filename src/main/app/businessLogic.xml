@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:stdio="http://www.mulesoft.org/schema/mule/stdio" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:smtp="http://www.mulesoft.org/schema/mule/smtp" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:spring="http://www.springframework.org/schema/beans" version="EE-3.6.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/stdio http://www.mulesoft.org/schema/mule/stdio/current/mule-stdio.xsd
+<mule xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:stdio="http://www.mulesoft.org/schema/mule/stdio" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:smtp="http://www.mulesoft.org/schema/mule/smtp" xmlns:json="http://www.mulesoft.org/schema/mule/json" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:sfdc="http://www.mulesoft.org/schema/mule/sfdc" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:spring="http://www.springframework.org/schema/beans" 
+version="EE-3.7.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/stdio http://www.mulesoft.org/schema/mule/stdio/current/mule-stdio.xsd
 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd
 http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
@@ -8,7 +9,8 @@ http://www.mulesoft.org/schema/mule/sfdc http://www.mulesoft.org/schema/mule/sfd
 http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
 http://www.mulesoft.org/schema/mule/json http://www.mulesoft.org/schema/mule/json/current/mule-json.xsd
 http://www.mulesoft.org/schema/mule/smtp http://www.mulesoft.org/schema/mule/smtp/current/mule-smtp.xsd
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd">
     <batch:job name="migrateUsersBatch">
         <batch:threading-profile poolExhaustedAction="WAIT"/>
         <batch:input>
@@ -17,36 +19,36 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
         <batch:process-records>
             <batch:step name="getUserInBStep">
 
-                <enricher source="#[payload]" target="#[recordVars['userInB']]" doc:name="store result in record var 'userInB'">
+                <enricher source="#[payload == null ? null : payload.Id]" target="#[payload.Id]" doc:name="store existing user Id in payload 'Id'">
                     <sfdc:query-single config-ref="SalesforceB" query="SELECT Id, LastModifiedDate FROM User WHERE Email = '#[payload['Email']]'" doc:name="query user in Salesforce instance B"/>
                 </enricher>
 
 
             </batch:step>
 
-            <batch:step name="createUsersInBStep" accept-expression="!(payload is NullPayload) &amp;&amp; '${sfdc.a.profile.id}' == payload['ProfileId']">
+            <batch:step name="createUsersInBStep" accept-expression="(payload != null) &amp;&amp; '${sfdc.a.profile.id}' == payload['ProfileId']">
 
-                <expression-component doc:name="setup User for upsert"><![CDATA[if (recordVars['userInB'] is NullPayload) {
-	// Remove ID as it is an insert
-	payload.remove('Id')
-} else {
-	// Add target system ID as it is an update
-    payload.put('Id', recordVars['userInB']['Id'])
-}
-
-// We should change these IDs to the ones corresponding to your SalesForce instances profile IDs
-payload.put('ProfileId',  '${sfdc.b.profile.id}');
-
-// TODO - Each Username should be UNIQUE even between different sandboxes of a single instance
-// If you are trying this kick with one instance and multiple sandboxes, please make sure that the target username is not the same as the original as a duplicated username error will come up
-payload.put('Username',  payload['Username'] + '.target');
-
-// We remove these fields as they are internally managed by SalesForce and it is not valid to create/update an object with them
-payload.remove('type');
-payload.remove('LastModifiedDate');]]></expression-component>
-
-                <logger message="User to create: #[payload]" level="INFO" doc:name="log User to create"/>
                 <batch:commit size="200" doc:name="Batch Commit">
+                    <dw:transform-message doc:name="setup Users for upsert">
+                        <dw:set-payload><![CDATA[%dw 1.0
+%input payload application/java
+%output application/java
+---
+payload map {
+	Email: $.Email,
+	FirstName: $.FirstName, 
+	LastName: $.LastName, 
+	Username: $.Username ++ '.target', 
+	Alias: $.Alias, 
+	TimeZoneSidKey: $.TimeZoneSidKey, 
+	LocaleSidKey: $.LocaleSidKey, 
+	EmailEncodingKey: $.EmailEncodingKey, 
+	ProfileId: p('sfdc.b.profile.id'), 
+	LanguageLocaleKey: $.LanguageLocaleKey,
+	(Id: $.Id) when ($.Id != null)
+}]]></dw:set-payload>
+                    </dw:transform-message>
+                    <logger message="Users to create: #[payload]" level="INFO" doc:name="log Users to create"/>
 					<sfdc:upsert config-ref="SalesforceB"  type="User" doc:name="upsert Users in org B" externalIdFieldName="Id">
                         <sfdc:objects ref="#[payload]"/>
 					</sfdc:upsert>
