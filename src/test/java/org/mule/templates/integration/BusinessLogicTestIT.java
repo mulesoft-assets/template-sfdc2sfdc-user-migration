@@ -13,11 +13,15 @@ import static org.mule.templates.builders.SfdcObjectBuilder.aUser;
 import java.io.FileInputStream;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mule.MessageExchangePattern;
 import org.mule.api.MuleEvent;
@@ -50,9 +54,17 @@ public class BusinessLogicTestIT extends AbstractTemplateTestCase {
 	private static List<Map<String, Object>> createdUsers = new ArrayList<Map<String, Object>>();
 
 	private BatchTestHelper helper;
+	
+	
+	@BeforeClass
+	public static void beforeTestClass() {
+		DateTimeFormatter df = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");		
+		System.setProperty("startingDate", df.print(new Date().getTime() - 10000 * 60 * 60 * 24));
+	}
 
 	@Before
 	public void setUp() throws Exception {
+		
 		final Properties props = new Properties();
 		try {
 			props.load(new FileInputStream(PATH_TO_TEST_PROPERTIES));
