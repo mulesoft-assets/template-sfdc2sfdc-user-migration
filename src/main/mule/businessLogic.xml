@@ -3,55 +3,17 @@
 <mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
 	xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
 	xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:email="http://www.mulesoft.org/schema/mule/email"
-	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd 
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
 http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
 
-	<configuration-properties file="mule-artifact.properties"
-		doc:name="Configuration properties" doc:id="ca514625-7559-4c4d-a352-9acbc3a331dc" />
-	<configuration-properties file="common.properties"
-		doc:name="Configuration properties" doc:id="77c4ebce-f817-4dff-99ad-6d2e76512d04" />
-	<configuration-properties file="mule.${mule.env}.properties"
-		doc:name="Configuration properties" doc:id="34a99db6-7c63-46ba-89f5-fa5d1fed399e" />
-	<email:smtp-config name="Gmail_SMTP" doc:name="Email SMTP"
-		doc:id="3fe54962-4f4c-4dc7-8aa4-acbad2d10e43">
-		<email:smtps-connection host="${smtp.host}"
-			port="${smtp.port}" user="${smtp.user}" password="${smtp.password}"
-			tlsContext="TLS_Context" />
-	</email:smtp-config>
-	<tls:context name="TLS_Context" doc:name="TLS Context"
-		doc:id="f2135468-7efa-4e92-a191-eaca88df39f2">
-		<tls:trust-store insecure="true" />
-	</tls:context>
-	<salesforce:sfdc-config name="Salesforce_Sfdc_A_config"
-		doc:name="Salesforce Sfdc A config" doc:id="97583da0-5499-4f2e-a610-5f6568d7e3c6">
-		<salesforce:basic-connection username="${sfdc.a.username}"
-			password="${sfdc.a.password}" securityToken="${sfdc.a.securityToken}"
-			url="${sfdc.a.url}" />
-	</salesforce:sfdc-config>
-	<salesforce:sfdc-config name="Salesforce_Sfdc_B_config"
-		doc:name="Salesforce Sfdc B config">
-		<salesforce:basic-connection username="${sfdc.b.username}"
-			password="${sfdc.b.password}" securityToken="${sfdc.b.securityToken}"
-			url="${sfdc.b.url}" />
-	</salesforce:sfdc-config>
-
-	<http:listener-config name="HTTP_Listener_config"
-		doc:name="HTTP Listener config" doc:id="46c2b4bc-6df0-451d-a6ce-510e8b26b1b4">
-		<http:listener-connection host="0.0.0.0"
-			port="${http.port}" />
-	</http:listener-config>
-	<flow name="template-sfdc2sfdc-user-migrationFlow" doc:id="dda2293a-f3aa-41b9-aa97-bfe9ccbda6c5">
-		<http:listener doc:name="/migrate"
-			doc:id="f72851a1-0b2a-4931-9dd8-9a3e712cf559" config-ref="HTTP_Listener_config"
-			path="/migrate" />
+	<flow name="businessLogicFlow" doc:id="dda2293a-f3aa-41b9-aa97-bfe9ccbda6c5">
 		<salesforce:query config-ref="Salesforce_Sfdc_A_config"
 			doc:name="Query Users from Salesforce A">
 			<salesforce:salesforce-query>SELECT Email, FirstName, LastName,
@@ -65,15 +27,14 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 }]]]></salesforce:parameters>
 		</salesforce:query>
 
-		<batch:job jobName="template-db2sfdc-user-migrationBatch_Job"
+		<batch:job jobName="migrateUsersBatch"
 			doc:id="e9265e23-8dde-4855-8b03-b8ee709a4896">
 			<batch:process-records>
-				<batch:step name="queryUserStep" doc:id="73f5cdc7-59ae-46cb-b1b4-1b3a965e2f3e">
+				<batch:step name="getUserInBStep" doc:id="73f5cdc7-59ae-46cb-b1b4-1b3a965e2f3e">
 					<salesforce:query-single config-ref="Salesforce_Sfdc_B_config"
 						doc:name="Query User from Salesforce B" doc:id="783b2ca3-1ace-4f8b-bc6d-d64b59563878"
 						target="IdInB">
-						<salesforce:salesforce-query>SELECT Id FROM User WHERE Email =
-							':email'
+						<salesforce:salesforce-query>SELECT Id FROM User WHERE Email = ':email'
 						</salesforce:salesforce-query>
 						<salesforce:parameters><![CDATA[#[output applicaton/java
 ---
@@ -92,9 +53,9 @@ payload ++ vars.IdInB]]></ee:set-payload>
 					</ee:transform>
 				</batch:step>
 				<batch:step name="upsertInSalesforceStep" doc:id="ef1fa6ea-9b07-4385-a0b2-491396f97a34"
-					acceptExpression='payload.sfdcId == null or (vars.dbLastModified &gt; payload.sfdcLastModifiedDate)'>
+					acceptExpression="#['${sfdc.a.profile.id}' == payload.ProfileId]">
 					<batch:aggregator doc:name="Batch Aggregator"
-						doc:id="1df6c548-87de-4cfe-9ebb-412cab2b1499" size="200">
+						doc:id="1df6c548-87de-4cfe-9ebb-412cab2b1499" size="${page.size}">
 						<ee:transform doc:name="Prepare Users for Upsert"
 							doc:id="5263e05a-1baf-4e7d-befd-a210be595768">
 							<ee:message>
@@ -159,12 +120,15 @@ payload map ((item) -> {
 		</scatter-gather>
 			</batch:on-complete>
 		</batch:job>
-		<set-payload value='{
-	"message": "Migration process has started!"
-}' doc:name="Set Payload" doc:id="796ea2b1-d774-4c95-ad54-3dd1151fddc7" mimeType="application/json"/>
 	</flow>
-	
-	
+	 <flow name="mainFlow" doc:id="fbd67c5d-528c-44b3-b6b3-68e7e2b7498f" >
+		<flow-ref doc:name="Trigger businessLogicFlow" doc:id="02850655-a5dc-4c89-bd79-a7e94cca7676" name="businessLogicFlow"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="488b507d-e26c-4c56-8759-8bb4f6645d71" type="ANY">
+				<flow-ref doc:name="errorHandlingFlow" doc:id="afdaf73c-0137-4d60-84f6-5c41234771a3" name="errorHandlingFlow"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow> 
 </mule>
 
 	
