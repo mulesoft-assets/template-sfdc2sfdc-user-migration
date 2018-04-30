@@ -34,14 +34,12 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 	<salesforce:sfdc-config name="Salesforce_Sfdc_A_config"
 		doc:name="Salesforce Sfdc A config" doc:id="97583da0-5499-4f2e-a610-5f6568d7e3c6">
 		<salesforce:basic-connection username="${sfdc.a.username}"
-			password="${sfdc.a.password}" securityToken="${sfdc.a.securityToken}"
-			url="${sfdc.a.url}" />
+			password="${sfdc.a.password}" securityToken="${sfdc.a.securityToken}"/>
 	</salesforce:sfdc-config>
 	<salesforce:sfdc-config name="Salesforce_Sfdc_B_config"
 		doc:name="Salesforce Sfdc B config">
 		<salesforce:basic-connection username="${sfdc.b.username}"
-			password="${sfdc.b.password}" securityToken="${sfdc.b.securityToken}"
-			url="${sfdc.b.url}" />
+			password="${sfdc.b.password}" securityToken="${sfdc.b.securityToken}"/>
 	</salesforce:sfdc-config>
 
 	<http:listener-config name="HTTP_Listener_config"
