@@ -14,18 +14,6 @@ http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/em
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
 
 	<flow name="businessLogicFlow" doc:id="dda2293a-f3aa-41b9-aa97-bfe9ccbda6c5">
-		<salesforce:query config-ref="Salesforce_Sfdc_A_config"
-			doc:name="Query Users from Salesforce A">
-			<salesforce:salesforce-query>SELECT Email, FirstName, LastName,
-				Username, Alias, TimeZoneSidKey, LocaleSidKey, EmailEncodingKey,
-				ProfileId, LanguageLocaleKey, LastModifiedDate FROM User WHERE
-				IsActive = true AND LastModifiedDate &gt; :startingDate</salesforce:salesforce-query>
-			<salesforce:parameters><![CDATA[#[output applicaton/java
----
-{
-	"startingDate" : "${startingDate}"
-}]]]></salesforce:parameters>
-		</salesforce:query>
 
 		<batch:job jobName="migrateUsersBatch"
 			doc:id="e9265e23-8dde-4855-8b03-b8ee709a4896">
@@ -42,8 +30,7 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 	"email" : payload.Email
 }]]]></salesforce:parameters>
 					</salesforce:query-single>
-					<ee:transform doc:name="Add SFDC User Id to payload"
-						doc:id="c9685fd5-458b-4888-b848-0b31d4b39c38">
+					<ee:transform doc:name="Add SFDC User Id to payload" doc:id="c9685fd5-458b-4888-b848-0b31d4b39c38">
 						<ee:message>
 							<ee:set-payload><![CDATA[%dw 2.0
 output application/java
@@ -122,6 +109,17 @@ payload map ((item) -> {
 		</batch:job>
 	</flow>
 	 <flow name="mainFlow" doc:id="fbd67c5d-528c-44b3-b6b3-68e7e2b7498f" >
+		<salesforce:query config-ref="Salesforce_Sfdc_A_config" doc:name="Query Users from Salesforce A">
+			<salesforce:salesforce-query>SELECT Email, FirstName, LastName,
+				Username, Alias, TimeZoneSidKey, LocaleSidKey, EmailEncodingKey,
+				ProfileId, LanguageLocaleKey, LastModifiedDate FROM User WHERE
+				IsActive = true AND LastModifiedDate &gt; :startingDate</salesforce:salesforce-query>
+			<salesforce:parameters><![CDATA[#[output applicaton/java
+---
+{
+	"startingDate" : "${startingDate}"
+}]]]></salesforce:parameters>
+		</salesforce:query>
 		<flow-ref doc:name="Trigger businessLogicFlow" doc:id="02850655-a5dc-4c89-bd79-a7e94cca7676" name="businessLogicFlow"/>
 		<error-handler >
 			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="488b507d-e26c-4c56-8759-8bb4f6645d71" type="ANY">
