@@ -23,11 +23,11 @@ http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mul
 		file="mule-artifact.properties" />
 
 	<munit:before-test name="test-suiteBefore_Test"
-		description="Before tests actions" doc:id="d3804d5d-d25b-4a84-ad38-d448bf5a0e62">
+		description="Before tests actions" doc:id="822ed1d9-be56-439d-b626-71274cf7166a">
 		<set-variable value="#[uuid()[0 to 7]]" doc:name="Set Random Firstname"
-			doc:id="493051ee-4c90-4f68-86dd-00795f05302b" variableName="FirstName" />
+			doc:id="9fea96c4-fb81-4497-a982-0cd7a9d32635" variableName="FirstName" />
 		<salesforce:query doc:name="Query test User from Salesforce A"
-			doc:id="413b76fb-6336-4b26-8a01-f3baa0c26f13" config-ref="Salesforce_Sfdc_A_config"
+			doc:id="b69d92a6-7c99-4a79-9dfc-a232bd95305a" config-ref="Salesforce_Sfdc_A_config"
 			target="testUsersA">
 			<salesforce:salesforce-query>SELECT Id, Email, FirstName, LastName,
 				Username, Alias, TimeZoneSidKey, LocaleSidKey, EmailEncodingKey,
@@ -40,7 +40,7 @@ http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mul
 }]]]></salesforce:parameters>
 		</salesforce:query>
 		<salesforce:query doc:name="Query test User from Salesforce B"
-			doc:id="6c1d23d8-5abe-40da-898c-3217eb71b717" config-ref="Salesforce_Sfdc_B_config"
+			doc:id="ed233dbc-779e-4d50-95c2-9e0df00fc405" config-ref="Salesforce_Sfdc_B_config"
 			target="testUsersB">
 			<salesforce:salesforce-query>SELECT Id, Email, FirstName, LastName,
 				Username, Alias, TimeZoneSidKey, LocaleSidKey, EmailEncodingKey,
@@ -53,7 +53,7 @@ http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mul
 }]]]></salesforce:parameters>
 		</salesforce:query>
 		<ee:transform doc:name="Preprare data for update test user A"
-			doc:id="a19b4eb6-85aa-4412-89ca-c3f966771734">
+			doc:id="3ece40a4-d0e1-43d5-9d57-7d861384c8ea">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/java
@@ -67,16 +67,16 @@ output application/java
 ]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<salesforce:update type="User" doc:name="Update test user in Salesforce A" doc:id="4933c7f2-7ea9-452b-912c-3d009852ee13" config-ref="Salesforce_Sfdc_A_config"/>
-		<munit-tools:mock-when doc:name="Mock email processor to avoid sending email" doc:id="10c0e2ec-cff0-4c7b-940e-1f6ed2a4dd3b" processor="email:send">
+		<salesforce:update type="User" doc:name="Update test user in Salesforce A" doc:id="ddd8475f-52c9-4579-b0bc-fc241bc1e8fc" config-ref="Salesforce_Sfdc_A_config"/>
+		<munit-tools:mock-when doc:name="Mock email processor to avoid sending email" doc:id="326df949-9b8d-491a-b81a-876afe90b0d5" processor="email:send">
 			<munit-tools:then-return />
 		</munit-tools:mock-when>
 	</munit:before-test>
-	<munit:test name="test-suiteTest" description="MUnit Test" doc:id="c689afcb-5b9b-4739-a586-33a4bbd054d4" >
+	<munit:test name="test-suiteTest" description="MUnit Test" doc:id="f60526a8-e049-470c-91c6-3d72d9aa73de" >
 		<munit:execution >
-			<munit-tools:assert-that doc:name="Assert that there just one test user in Salesforce A" doc:id="e59eec9a-5c54-4c34-b9e2-3ffa12ef89ec" expression="#[sizeOf(vars.testUsersA)]" is="#[MunitTools::equalTo(1)]" message="There is not just one tested user in Salesforce A" />
-			<munit-tools:assert-that doc:name="Assert that there just one test user in Salesforce B" doc:id="9d24550f-433d-4b69-9cac-7f9422cc3590" expression="#[sizeOf(vars.testUsersB)]" is="#[MunitTools::equalTo(1)]" message="There is not just one tested user in Salesforce B"/>
-			<salesforce:query doc:name="Query test User from Salesforce A" doc:id="2044b829-7fdd-4e01-955c-f2b31f35ef8f" config-ref="Salesforce_Sfdc_A_config">
+			<munit-tools:assert-that doc:name="Assert that there just one test user in Salesforce A" doc:id="a8fefff5-211e-4e3d-bb99-3cfc0f79324e" expression="#[sizeOf(vars.testUsersA)]" is="#[MunitTools::equalTo(1)]" message="There is not just one tested user in Salesforce A" />
+			<munit-tools:assert-that doc:name="Assert that there just one test user in Salesforce B" doc:id="19462b0a-005d-4ec0-b97c-bf348cf5c182" expression="#[sizeOf(vars.testUsersB)]" is="#[MunitTools::equalTo(1)]" message="There is not just one tested user in Salesforce B"/>
+			<salesforce:query doc:name="Query test User from Salesforce A" doc:id="bfbb9966-2a6a-4c34-805c-39866971dcba" config-ref="Salesforce_Sfdc_A_config">
 				<salesforce:salesforce-query>SELECT Id, Email, FirstName, LastName, Username, Alias, TimeZoneSidKey, LocaleSidKey, EmailEncodingKey, ProfileId, LanguageLocaleKey, LastModifiedDate FROM User WHERE Email = ':email'</salesforce:salesforce-query>
 				<salesforce:parameters><![CDATA[#[output application/java
 ---
@@ -84,11 +84,11 @@ output application/java
 	"email" : p('sfdc.test.user.email')
 }]]]></salesforce:parameters>
 			</salesforce:query>
-			<flow-ref doc:name="call businessLogicFlow" doc:id="ca284c99-f3c1-4670-be64-de0e77b25856" name="businessLogicFlow"/>
-			<scripting:execute engine="groovy" doc:name="Sleep for 10s until the processing is completed" doc:id="ea90702f-c570-41a5-8ce1-9bb301531bda" >
+			<flow-ref doc:name="call businessLogicFlow" doc:id="b3b6eb22-47ec-422e-9cbf-54838e3ffd98" name="businessLogicFlow"/>
+			<scripting:execute engine="groovy" doc:name="Sleep for 10s until the processing is completed" doc:id="e7c279c6-60a7-4a66-88b1-004cf6fe51b2" >
 				<scripting:code >sleep(10000)</scripting:code>
 			</scripting:execute>
-			<salesforce:query doc:name="Query test User from Salesforce B" doc:id="e4f61761-23f4-4875-98bb-dc156178c2a1" config-ref="Salesforce_Sfdc_B_config" target="testUsersBChanged" >
+			<salesforce:query doc:name="Query test User from Salesforce B" doc:id="56127744-2b6d-4f8c-908d-f0697f52627b" config-ref="Salesforce_Sfdc_B_config" target="testUsersBChanged" >
 				<salesforce:salesforce-query >SELECT Id, Email, FirstName, LastName, Username, Alias, TimeZoneSidKey, LocaleSidKey, EmailEncodingKey, ProfileId, LanguageLocaleKey, LastModifiedDate FROM User WHERE Email = ':email'</salesforce:salesforce-query>
 				<salesforce:parameters ><![CDATA[#[output application/java
 ---
@@ -98,11 +98,11 @@ output application/java
 			</salesforce:query>
 		</munit:execution>
 		<munit:validation >
-			<munit-tools:assert-that doc:name="Assert that FirstName is set to generated one" doc:id="9070f3fe-3550-4532-8142-261c5f395c15" expression="#[vars.testUsersBChanged[0].FirstName]" is="#[MunitTools::equalTo(vars.FirstName)]"/>
+			<munit-tools:assert-that doc:name="Assert that FirstName is set to generated one" doc:id="bda138ae-846e-47c0-8305-5432ffec69dd" expression="#[vars.testUsersBChanged[0].FirstName]" is="#[MunitTools::equalTo(vars.FirstName)]"/>
 		</munit:validation>
 	</munit:test>
-	<munit:after-test name="test-suiteAfter_Test" description="After tests actions" doc:id="3c0d7e24-43ad-452a-9f7c-947defb41f92" >
-		<ee:transform doc:name="Preprare data for revert test user A" doc:id="46179002-7cee-4f22-838d-98a5b65b11aa" >
+	<munit:after-test name="test-suiteAfter_Test" description="After tests actions" doc:id="5154e200-beeb-49e7-86cd-d3aa91fcbb51" >
+		<ee:transform doc:name="Preprare data for revert test user A" doc:id="fb6b43d8-16a3-448e-a1f6-93919d22d416" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/java
@@ -116,8 +116,8 @@ output application/java
 ]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<salesforce:update type="User" doc:name="Revert test user in Salesforce A" doc:id="bec472a4-bf1d-4046-a597-3bd5922892a7" config-ref="Salesforce_Sfdc_A_config" />
-		<ee:transform doc:name="Preprare data for revert test user B" doc:id="a8f24947-d5f4-4161-8764-707305a2e19d" >
+		<salesforce:update type="User" doc:name="Revert test user in Salesforce A" doc:id="251d5474-f3c4-4776-9e95-96b87db966b9" config-ref="Salesforce_Sfdc_A_config" />
+		<ee:transform doc:name="Preprare data for revert test user B" doc:id="548293c8-defa-4563-a3f0-ec4861fabe8d" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
 output application/java
@@ -131,7 +131,7 @@ output application/java
 ]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<salesforce:update doc:name="Revert test user in Salesforce B" doc:id="bfa22571-0697-4799-a14a-7e48943986cb" config-ref="Salesforce_Sfdc_B_config" type="User"/>
+		<salesforce:update doc:name="Revert test user in Salesforce B" doc:id="16f25294-92c4-4b3f-af00-f727db8a12e3" config-ref="Salesforce_Sfdc_B_config" type="User"/>
 	</munit:after-test>
 
 
