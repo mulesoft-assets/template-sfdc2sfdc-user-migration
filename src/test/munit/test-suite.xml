@@ -101,6 +101,38 @@ output application/java
 			<munit-tools:assert-that doc:name="Assert that FirstName is set to generated one" doc:id="9070f3fe-3550-4532-8142-261c5f395c15" expression="#[vars.testUsersBChanged[0].FirstName]" is="#[MunitTools::equalTo(vars.FirstName)]"/>
 		</munit:validation>
 	</munit:test>
+	<munit:after-test name="test-suiteAfter_Test" description="After tests actions" doc:id="3c0d7e24-43ad-452a-9f7c-947defb41f92" >
+		<ee:transform doc:name="Preprare data for revert test user A" doc:id="46179002-7cee-4f22-838d-98a5b65b11aa" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[
+	{
+		FirstName: vars.testUsersA[0].FirstName, 
+		Id: vars.testUsersA[0].Id
+	}
+]
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:update type="User" doc:name="Revert test user in Salesforce A" doc:id="bec472a4-bf1d-4046-a597-3bd5922892a7" config-ref="Salesforce_Sfdc_A_config" />
+		<ee:transform doc:name="Preprare data for revert test user B" doc:id="a8f24947-d5f4-4161-8764-707305a2e19d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+[
+	{
+		FirstName: vars.testUsersB[0].FirstName, 
+		Id: vars.testUsersB[0].Id
+	}
+]
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<salesforce:update doc:name="Revert test user in Salesforce B" doc:id="bfa22571-0697-4799-a14a-7e48943986cb" config-ref="Salesforce_Sfdc_B_config" type="User"/>
+	</munit:after-test>
 
 
 </mule>
