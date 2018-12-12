@@ -48,6 +48,11 @@
             <classifier>mule-plugin</classifier>
             <scope>test</scope>
         </dependency>
+    	<dependency>
+            <groupId>org.mule.connectors</groupId>
+            <artifactId>mule-sockets-connector</artifactId>
+            <classifier>mule-plugin</classifier>
+        </dependency>
     </dependencies>
     <repositories>
         <repository>
