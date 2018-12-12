@@ -51,6 +51,7 @@
     	<dependency>
             <groupId>org.mule.connectors</groupId>
             <artifactId>mule-sockets-connector</artifactId>
+            <version>1.1.2</version>
             <classifier>mule-plugin</classifier>
         </dependency>
     </dependencies>
@@ -61,6 +62,12 @@
             <url>https://maven.anypoint.mulesoft.com/api/v1/maven</url>
             <layout>default</layout>
         </repository>
+        <repository>
+            <id>mulesoft-releases</id>
+            <name>MuleSoft Releases Repository</name>
+            <url>https://repository.mulesoft.org/releases/</url>
+            <layout>default</layout>
+        </repository>        
     </repositories>
     <build>
         <plugins>
