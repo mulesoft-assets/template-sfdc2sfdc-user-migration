@@ -13,15 +13,14 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
 http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
 
-	<flow name="businessLogicFlow" doc:id="dda2293a-f3aa-41b9-aa97-bfe9ccbda6c5">
+	<flow name="businessLogicFlow" doc:id="8c4f5ec4-1849-4aa8-ae4a-05fe689fdc95">
 
 		<batch:job jobName="migrateUsersBatch"
-			doc:id="e9265e23-8dde-4855-8b03-b8ee709a4896">
+			doc:id="ee06cec1-11de-4ed6-bbe0-6696c8cf5007">
 			<batch:process-records>
-				<batch:step name="getUserInBStep" doc:id="73f5cdc7-59ae-46cb-b1b4-1b3a965e2f3e">
+				<batch:step name="getUserInBStep" doc:id="905bd6b1-0d09-4b68-b7d3-eed208a1e1da">
 					<salesforce:query-single config-ref="Salesforce_Sfdc_B_config"
-						doc:name="Query User from Salesforce B" doc:id="783b2ca3-1ace-4f8b-bc6d-d64b59563878"
-						target="IdInB">
+						doc:name="Query User from Salesforce B" doc:id="52bedbdd-db5d-45dc-a04f-bf39da36fc72">
 						<salesforce:salesforce-query>SELECT Id FROM User WHERE Email = ':email'
 						</salesforce:salesforce-query>
 						<salesforce:parameters><![CDATA[#[output applicaton/java
@@ -30,7 +29,7 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 	"email" : payload.Email
 }]]]></salesforce:parameters>
 					</salesforce:query-single>
-					<ee:transform doc:name="Add SFDC User Id to payload" doc:id="c9685fd5-458b-4888-b848-0b31d4b39c38">
+					<ee:transform doc:name="Add SFDC User Id to payload" doc:id="4003e564-6a51-4c99-8b2f-dd4cef136531">
 						<ee:message>
 							<ee:set-payload><![CDATA[%dw 2.0
 output application/java
@@ -39,12 +38,11 @@ payload ++ vars.IdInB]]></ee:set-payload>
 						</ee:message>
 					</ee:transform>
 				</batch:step>
-				<batch:step name="upsertInSalesforceStep" doc:id="ef1fa6ea-9b07-4385-a0b2-491396f97a34"
-					acceptExpression="#['${sfdc.a.profile.id}' == payload.ProfileId]">
+				<batch:step name="upsertInSalesforceStep" doc:id="7448885e-6080-4ab0-95f6-250e101126e4"#['${sfdc.a.profile.id}' == payload.ProfileId]">
 					<batch:aggregator doc:name="Batch Aggregator"
-						doc:id="1df6c548-87de-4cfe-9ebb-412cab2b1499" size="${page.size}">
+						doc:id="a7a35e6b-4254-4a82-b749-eeae684c86f6" size="${page.size}">
 						<ee:transform doc:name="Prepare Users for Upsert"
-							doc:id="5263e05a-1baf-4e7d-befd-a210be595768">
+							doc:id="a6ac8fea-4ea8-4770-9812-d5a04ea603c2">
 							<ee:message>
 								<ee:set-payload><![CDATA[%dw 2.0
 output application/java
@@ -65,25 +63,25 @@ payload map ((item) -> {
 							</ee:message>
 						</ee:transform>
 						<logger level="INFO" doc:name="Log records to upsert"
-							doc:id="5647e369-d5c8-47d3-8648-3c6449046dda" message="#[write(payload, 'application/json')]" />
+							doc:id="bd1cd2d2-8fd3-43f3-af8a-a980d48c16ed" message="#[write(payload, 'application/json')]" />
 						<salesforce:upsert config-ref="Salesforce_Sfdc_B_config"
 							externalIdFieldName="Id" type="User" doc:name="Upsert Users in Salesforce B"
-							doc:id="4a36339e-9efd-4264-a864-ddbdbc0b1732" />
+							doc:id="33cd1761-433c-4374-8a57-1b0beac42eba" />
 						<logger level="INFO" doc:name="Log Salesforce response"
-							doc:id="5647e369-d5c8-47d3-8648-3c6449046dda" message="#[write(payload, 'application/json')]" />
+							doc:id="3818422d-036b-4bdd-9643-aae361646f44" message="#[write(payload, 'application/json')]" />
 					</batch:aggregator>
 				</batch:step>
 			</batch:process-records>
 			<batch:on-complete>
 				<scatter-gather doc:name="Scatter-Gather"
-					doc:id="ef2964ef-0b85-4c6c-a5ee-b834df639e7b">
+					doc:id="714c0a1b-6930-4932-8d0d-d4844e6d7dbc">
 					<route>
 						<logger level="INFO" doc:name="Migration process has finished!"
-							doc:id="b7575d38-7dbd-4602-9186-1bbb25234896" message="Migration process has finished!" />
+							doc:id="976becee-bc5c-4708-a177-980aeab17962" message="Migration process has finished!" />
 					</route>
 					<route>
 						<ee:transform doc:name="Prepare migration result email"
-							doc:id="c84b4bc4-5a65-41c1-9d0c-f1ebd3d8db7a">
+							doc:id="4981ee86-bfbf-41fc-8187-7bdb7324714c">
 							<ee:message>
 								<ee:set-payload><![CDATA[%dw 2.0
  output text/plain
@@ -98,7 +96,7 @@ payload map ((item) -> {
  ++ "\n Processed Records: " 		++ payload.processedRecords!]]></ee:set-payload>
 							</ee:message>
 						</ee:transform>
-						<email:send config-ref="Gmail_SMTP" doc:name="Send migration result email" doc:id="5896eaa9-dd10-47a2-a6fc-6319b11dbd06" fromAddress="${mail.from}" subject="${mail.subject}">
+						<email:send config-ref="Gmail_SMTP" doc:name="Send migration result email" doc:id="03700d32-4533-4319-a900-c7cb8c524e56" fromAddress="${mail.from}" subject="${mail.subject}">
  							<email:to-addresses>
  								<email:to-address value="${mail.to}" />
  							</email:to-addresses>
@@ -108,7 +106,7 @@ payload map ((item) -> {
 			</batch:on-complete>
 		</batch:job>
 	</flow>
-	 <flow name="mainFlow" doc:id="fbd67c5d-528c-44b3-b6b3-68e7e2b7498f" >
+	 <flow name="mainFlow" doc:id="3ccc9888-7d71-45e6-b1bc-f8795bf50f08" >
 		<salesforce:query config-ref="Salesforce_Sfdc_A_config" doc:name="Query Users from Salesforce A">
 			<salesforce:salesforce-query>SELECT Email, FirstName, LastName,
 				Username, Alias, TimeZoneSidKey, LocaleSidKey, EmailEncodingKey,
@@ -120,10 +118,10 @@ payload map ((item) -> {
 	"startingDate" : "${startingDate}"
 }]]]></salesforce:parameters>
 		</salesforce:query>
-		<flow-ref doc:name="Trigger businessLogicFlow" doc:id="02850655-a5dc-4c89-bd79-a7e94cca7676" name="businessLogicFlow"/>
+		<flow-ref doc:name="Trigger businessLogicFlow" doc:id="a2651879-1469-45ee-aa31-9c34eaa53b53" name="businessLogicFlow"/>
 		<error-handler >
-			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="488b507d-e26c-4c56-8759-8bb4f6645d71" type="ANY">
-				<flow-ref doc:name="errorHandlingFlow" doc:id="afdaf73c-0137-4d60-84f6-5c41234771a3" name="errorHandlingFlow"/>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="0456434b-7948-4620-ba89-f793142d0ebe" type="ANY">
+				<flow-ref doc:name="errorHandlingFlow" doc:id="af74b232-e61a-4405-844f-711f8cbb0d09" name="errorHandlingFlow"/>
 			</on-error-propagate>
 		</error-handler>
 	</flow> 

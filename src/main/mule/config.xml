@@ -1,23 +1,23 @@
 <?xml version='1.0' encoding='utf-8'?>
 <mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd  http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd  http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
 		
-	<configuration-properties file="mule-artifact.properties" doc:id="ca514625-7559-4c4d-a352-9acbc3a331dc" doc:name="Configuration properties" />
-	<configuration-properties file="common.properties" doc:id="77c4ebce-f817-4dff-99ad-6d2e76512d04" doc:name="Configuration properties" />
-	<configuration-properties file="mule.${mule.env}.properties" doc:id="34a99db6-7c63-46ba-89f5-fa5d1fed399e" doc:name="Configuration properties" />
-	<email:smtp-config name="Gmail_SMTP" doc:id="3fe54962-4f4c-4dc7-8aa4-acbad2d10e43" doc:name="Email SMTP">
+	<configuration-properties file="mule-artifact.properties" doc:id="c8ec1874-40bb-4228-8c8a-cfd2b58ac022" doc:name="Configuration properties" />
+	<configuration-properties file="common.properties" doc:id="c638565f-962e-495f-8bda-0fee7336262a" doc:name="Configuration properties" />
+	<configuration-properties file="mule.${mule.env}.properties" doc:id="1a7a69ac-c488-45d3-9302-9ef9b4d1c33d" doc:name="Configuration properties" />
+	<email:smtp-config name="Gmail_SMTP" doc:id="b8e2b5b2-a5fe-40ed-b1f4-d145ccc34f00" doc:name="Email SMTP">
 		<email:smtps-connection host="${smtp.host}" password="${smtp.password}" port="${smtp.port}" tlsContext="TLS_Context" user="${smtp.user}" />
 	</email:smtp-config>
-	<tls:context name="TLS_Context" doc:id="f2135468-7efa-4e92-a191-eaca88df39f2" doc:name="TLS Context">
+	<tls:context name="TLS_Context" doc:id="3e3a9a60-d7c9-40bf-9b68-d00260f35e23" doc:name="TLS Context">
 		<tls:trust-store insecure="true" />
 	</tls:context>
-	<salesforce:sfdc-config name="Salesforce_Sfdc_A_config" doc:id="97583da0-5499-4f2e-a610-5f6568d7e3c6" doc:name="Salesforce Sfdc A config">
+	<salesforce:sfdc-config name="Salesforce_Sfdc_A_config" doc:id="1ccf091e-d48f-4e18-8ca1-5c394fb4c02c" doc:name="Salesforce Sfdc A config">
 		<salesforce:basic-connection password="${sfdc.a.password}" securityToken="${sfdc.a.securityToken}" username="${sfdc.a.username}" />
 	</salesforce:sfdc-config>
 	<salesforce:sfdc-config name="Salesforce_Sfdc_B_config" doc:name="Salesforce Sfdc B config">
 		<salesforce:basic-connection password="${sfdc.b.password}" securityToken="${sfdc.b.securityToken}" username="${sfdc.b.username}" />
 	</salesforce:sfdc-config>
 
-	<http:listener-config name="HTTP_Listener_config" doc:id="46c2b4bc-6df0-451d-a6ce-510e8b26b1b4" doc:name="HTTP Listener config">
+	<http:listener-config name="HTTP_Listener_config" doc:id="8f97d47d-a441-484f-a082-177ffc920284" doc:name="HTTP Listener config">
 		<http:listener-connection host="0.0.0.0" port="${http.port}" />
 	</http:listener-config>
 	
