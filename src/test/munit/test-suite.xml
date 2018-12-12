@@ -19,8 +19,6 @@ http://www.mulesoft.org/schema/mule/scripting http://www.mulesoft.org/schema/mul
 		file="mule.test.properties" />
 	<configuration-properties doc:name="Configuration properties"
 		file="common.properties" />
-	<configuration-properties doc:name="Configuration properties"
-		file="mule-artifact.properties" />
 
 	<munit:before-test name="test-suiteBefore_Test"
 		description="Before tests actions" doc:id="822ed1d9-be56-439d-b626-71274cf7166a">

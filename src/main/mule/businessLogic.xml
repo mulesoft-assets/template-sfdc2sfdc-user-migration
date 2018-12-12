@@ -2,28 +2,27 @@
 
 <mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
 	xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:email="http://www.mulesoft.org/schema/mule/email"
 	xmlns="http://www.mulesoft.org/schema/mule/core"
 	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd 
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
-http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
 
 	<flow name="businessLogicFlow" doc:id="8c4f5ec4-1849-4aa8-ae4a-05fe689fdc95">
-
 		<batch:job jobName="migrateUsersBatch"
 			doc:id="ee06cec1-11de-4ed6-bbe0-6696c8cf5007">
 			<batch:process-records>
 				<batch:step name="getUserInBStep" doc:id="905bd6b1-0d09-4b68-b7d3-eed208a1e1da">
 					<salesforce:query-single config-ref="Salesforce_Sfdc_B_config"
-						doc:name="Query User from Salesforce B" doc:id="52bedbdd-db5d-45dc-a04f-bf39da36fc72">
+						doc:name="Query User from Salesforce B" doc:id="52bedbdd-db5d-45dc-a04f-bf39da36fc72" target="IdInB">
 						<salesforce:salesforce-query>SELECT Id FROM User WHERE Email = ':email'
 						</salesforce:salesforce-query>
-						<salesforce:parameters><![CDATA[#[output applicaton/java
+						<salesforce:parameters><![CDATA[#[output application/java
 ---
 {
 	"email" : payload.Email
