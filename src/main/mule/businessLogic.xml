@@ -38,7 +38,7 @@ payload ++ vars.IdInB]]></ee:set-payload>
 						</ee:message>
 					</ee:transform>
 				</batch:step>
-				<batch:step name="upsertInSalesforceStep" doc:id="7448885e-6080-4ab0-95f6-250e101126e4"#['${sfdc.a.profile.id}' == payload.ProfileId]">
+				<batch:step name="upsertInSalesforceStep" doc:id="7448885e-6080-4ab0-95f6-250e101126e4" acceptExpression="#['${sfdc.a.profile.id}' == payload.ProfileId]">
 					<batch:aggregator doc:name="Batch Aggregator"
 						doc:id="a7a35e6b-4254-4a82-b749-eeae684c86f6" size="${page.size}">
 						<ee:transform doc:name="Prepare Users for Upsert"
